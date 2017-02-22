@@ -8,36 +8,30 @@ namespace Nop.Plugin.Payments.Square.Models
     {
         public int ActiveStoreScopeConfiguration { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.PayPalDirect.Fields.ClientId")]
-        public string ClientId { get; set; }
-        public bool ClientId_OverrideForStore { get; set; }
+        [NopResourceDisplayName("Plugins.Payments.Square.Fields.LocationId")]
+        public string LocationId { get; set; }
+        public bool LocationId_OverrideForStore { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.PayPalDirect.Fields.ClientSecret")]
-        public string ClientSecret { get; set; }
-        public bool ClientSecret_OverrideForStore { get; set; }
+        [NopResourceDisplayName("Plugins.Payments.Square.Fields.AccessToken")]
+        public string AccessToken { get; set; }
+        public bool AccessToken_OverrideForStore { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.PayPalDirect.Fields.WebhookId")]
-        public string WebhookId { get; set; }
+        [NopResourceDisplayName("Plugins.Payments.Square.Fields.ApplicationId")]
+        public string ApplicationId { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.PayPalDirect.Fields.UseSandbox")]
+        [NopResourceDisplayName("Plugins.Payments.Square.Fields.SandboxAccessToken")]
+        public string SandboxAccessToken { get; set; }
+
+        [NopResourceDisplayName("Plugins.Payments.Square.Fields.SandboxApplicationId")]
+        public string SandboxApplicationId { get; set; }
+        public bool SandboxApplicationId_OverrideForStore { get; set; }
+
+        [NopResourceDisplayName("Plugins.Payments.Square.Fields.UseSandbox")]
         public bool UseSandbox { get; set; }
         public bool UseSandbox_OverrideForStore { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.PayPalDirect.Fields.PassPurchasedItems")]
+        [NopResourceDisplayName("Plugins.Payments.Square.Fields.PassPurchasedItems")]
         public bool PassPurchasedItems { get; set; }
         public bool PassPurchasedItems_OverrideForStore { get; set; }
-
-        public int TransactModeId { get; set; }
-        public bool TransactModeId_OverrideForStore { get; set; }
-        [NopResourceDisplayName("Plugins.Payments.PayPalDirect.Fields.TransactMode")]
-        public SelectList TransactModeValues { get; set; }
-
-        [NopResourceDisplayName("Plugins.Payments.PayPalDirect.Fields.AdditionalFee")]
-        public decimal AdditionalFee { get; set; }
-        public bool AdditionalFee_OverrideForStore { get; set; }
-
-        [NopResourceDisplayName("Plugins.Payments.PayPalDirect.Fields.AdditionalFeePercentage")]
-        public bool AdditionalFeePercentage { get; set; }
-        public bool AdditionalFeePercentage_OverrideForStore { get; set; }
     }
 }

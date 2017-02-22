@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Nop.Plugin.Payments.PayPalDirect.Models;
+using Nop.Plugin.Payments.Square.Models;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Validators;
 
