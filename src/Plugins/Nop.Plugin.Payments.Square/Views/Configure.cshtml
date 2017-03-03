@@ -24,7 +24,7 @@
                 </p>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.OverrideStoreCheckboxFor(model => model.ClientId_OverrideForStore, model => model.ClientId, Model.ActiveStoreScopeConfiguration)
+                        @*@Html.OverrideStoreCheckboxFor(model => model.ApplicationId_OverrideForStore, model => model.Application_Id, Model.ActiveStoreScopeConfiguration)*@
                         @Html.NopLabelFor(model => model.ApplicationId)
                     </div>
                     <div class="col-md-9">
@@ -34,7 +34,7 @@
                 </div>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.OverrideStoreCheckboxFor(model => model.ClientSecret_OverrideForStore, model => model.ClientSecret, Model.ActiveStoreScopeConfiguration)
+                        @*@Html.OverrideStoreCheckboxFor(model => model.ClientSecret_OverrideForStore, model => model.ClientSecret, Model.ActiveStoreScopeConfiguration)*@
                         @Html.NopLabelFor(model => model.AccessToken)
                     </div>
                     <div class="col-md-9">
@@ -44,7 +44,17 @@
                 </div>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.OverrideStoreCheckboxFor(model => model.UseSandbox_OverrideForStore, model => model.UseSandbox, Model.ActiveStoreScopeConfiguration)
+                        @*@Html.OverrideStoreCheckboxFor(model => model.LocationId_OverrideForStore, model => model.Location_Id, Model.ActiveStoreScopeConfiguration)*@
+                        @Html.NopLabelFor(model => model.LocationId)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.LocationId)
+                        @Html.ValidationMessageFor(model => model.LocationId)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @*@Html.OverrideStoreCheckboxFor(model => model.UseSandbox_OverrideForStore, model => model.UseSandbox, Model.ActiveStoreScopeConfiguration)*@
                         @Html.NopLabelFor(model => model.UseSandbox)
                     </div>
                     <div class="col-md-9">
@@ -54,7 +64,27 @@
                 </div>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.OverrideStoreCheckboxFor(model => model.PassPurchasedItems_OverrideForStore, model => model.PassPurchasedItems, Model.ActiveStoreScopeConfiguration)
+                        @*@Html.OverrideStoreCheckboxFor(model => model.SandboxApplicationId_OverrideForStore, model => model.SandboxApplication_Id, Model.ActiveStoreScopeConfiguration)*@
+                        @Html.NopLabelFor(model => model.SandboxApplicationId)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.SandboxApplicationId)
+                        @Html.ValidationMessageFor(model => model.SandboxApplicationId)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @*@Html.OverrideStoreCheckboxFor(model => model.SandboxAccessToken_OverrideForStore, model => model.SandboxAccessToken, Model.ActiveStoreScopeConfiguration)*@
+                        @Html.NopLabelFor(model => model.SandboxAccessToken)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.SandboxAccessToken)
+                        @Html.ValidationMessageFor(model => model.SandboxAccessToken)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @*@Html.OverrideStoreCheckboxFor(model => model.PassPurchasedItems_OverrideForStore, model => model.PassPurchasedItems, Model.ActiveStoreScopeConfiguration)*@
                         @Html.NopLabelFor(model => model.PassPurchasedItems)
                     </div>
                     <div class="col-md-9">

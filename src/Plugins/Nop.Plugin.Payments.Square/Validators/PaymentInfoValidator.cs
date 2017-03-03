@@ -3,7 +3,7 @@ using Nop.Plugin.Payments.Square.Models;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Validators;
 
-namespace Nop.Plugin.Payments.PayPalDirect.Validators
+namespace Nop.Plugin.Payments.Square.Validators
 {
     public partial class PaymentInfoValidator : BaseNopValidator<PaymentInfoModel>
     {

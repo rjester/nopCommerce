@@ -132,17 +132,21 @@ namespace Nop.Plugin.Payments.Square.Controllers
             {
                 ApplicationId = squarePaymentSettings.ApplicationId,
                 AccessToken = squarePaymentSettings.AccessToken,
-                ApplicationId = squarePaymentSettings.LocationId,
+                LocationId = squarePaymentSettings.LocationId,
                 UseSandbox = squarePaymentSettings.UseSandbox,
+                SandboxApplicationId = squarePaymentSettings.SandboxApplicationId,
+                SandboxAccessToken = squarePaymentSettings.SandboxAccessToken,
                 PassPurchasedItems = squarePaymentSettings.PassPurchasedItems,
                 ActiveStoreScopeConfiguration = storeScope
             };
             if (storeScope > 0)
             {
-                model.ApplicationId_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.ClientId, storeScope);
-                model.AccessToken_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.ClientSecret, storeScope);
-                model.LocationId_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.ClientId, storeScope);
+                model.ApplicationId_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.ApplicationId, storeScope);
+                model.AccessToken_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.AccessToken, storeScope);
+                model.LocationId_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.LocationId, storeScope);
                 model.UseSandbox_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.UseSandbox, storeScope);
+                model.SandboxApplicationId_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.SandboxApplicationId, storeScope);
+                model.SandboxAccessToken_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.SandboxAccessToken, storeScope);
                 model.PassPurchasedItems_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.PassPurchasedItems, storeScope);
             }
 
@@ -165,17 +169,20 @@ namespace Nop.Plugin.Payments.Square.Controllers
             ////save settings
             squarePaymentSettings.ApplicationId = model.ApplicationId;
             squarePaymentSettings.AccessToken = model.AccessToken;
-            
             squarePaymentSettings.UseSandbox = model.UseSandbox;
+            squarePaymentSettings.SandboxApplicationId = model.SandboxApplicationId;
+            squarePaymentSettings.SandboxAccessToken = model.SandboxAccessToken;
             squarePaymentSettings.PassPurchasedItems = model.PassPurchasedItems;
 
             /* We do not clear cache after each setting update.
              * This behavior can increase performance because cached settings will not be cleared 
              * and loaded from database after each update */
             _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.ApplicationId, model.ApplicationId_OverrideForStore, storeScope, false);
-            _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.ClientSecret, model.AccessToken_OverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.AccessToken, model.AccessToken_OverrideForStore, storeScope, false);
             _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.LocationId, model.LocationId_OverrideForStore, storeScope, false);
             _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.UseSandbox, model.UseSandbox_OverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.SandboxApplicationId, model.SandboxApplicationId_OverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.SandboxAccessToken, model.SandboxAccessToken_OverrideForStore, storeScope, false);
             _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.PassPurchasedItems, model.PassPurchasedItems_OverrideForStore, storeScope, false);
             
             //now clear settings cache

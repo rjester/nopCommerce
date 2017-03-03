@@ -44,10 +44,6 @@
       <HintPath>..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="PayPal, Version=1.8.0.0, Culture=neutral, PublicKeyToken=5b4afc1ccaef40fb, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\PayPal.1.8.0\lib\net451\PayPal.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="RestSharp, Version=105.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\RestSharp.105.1.0\lib\net451\RestSharp.dll</HintPath>
       <Private>True</Private>
@@ -74,7 +70,7 @@
     <Compile Include="Controllers\SquareController.cs" />
     <Compile Include="Models\ConfigurationModel.cs" />
     <Compile Include="Models\PaymentInfoModel.cs" />
-    <Compile Include="PaypalHelper.cs" />
+    <Compile Include="SquareHelper.cs" />
     <Compile Include="SquarePaymentProcessor.cs" />
     <Compile Include="SquarePaymentSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

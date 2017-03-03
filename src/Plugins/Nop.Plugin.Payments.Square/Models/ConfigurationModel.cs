@@ -18,9 +18,11 @@ namespace Nop.Plugin.Payments.Square.Models
 
         [NopResourceDisplayName("Plugins.Payments.Square.Fields.ApplicationId")]
         public string ApplicationId { get; set; }
+        public bool ApplicationId_OverrideForStore { get; set; }
 
         [NopResourceDisplayName("Plugins.Payments.Square.Fields.SandboxAccessToken")]
         public string SandboxAccessToken { get; set; }
+        public bool SandboxAccessToken_OverrideForStore { get; set; }
 
         [NopResourceDisplayName("Plugins.Payments.Square.Fields.SandboxApplicationId")]
         public string SandboxApplicationId { get; set; }

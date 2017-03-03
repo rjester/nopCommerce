@@ -21,7 +21,6 @@ using Nop.Services.Localization;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Tax;
-using PayPal.Api;
 
 namespace Nop.Plugin.Payments.Square
 {
@@ -60,7 +59,7 @@ namespace Nop.Plugin.Payments.Square
             IPaymentService paymentService,
             IPriceCalculationService priceCalculationService,
             IProductAttributeParser productAttributeParser,
-            ISettingService settingService, 
+            ISettingService settingService,
             IStoreContext storeContext,
             ITaxService taxService,
             IWebHelper webHelper,
@@ -589,7 +588,7 @@ namespace Nop.Plugin.Payments.Square
             //            result.AddError(exc.InnerException != null ? exc.InnerException.Message : exc.Message);
             //    }
 
-                return result;
+            return result;
         }
 
         /// <summary>
@@ -636,43 +635,43 @@ namespace Nop.Plugin.Payments.Square
         {
             var result = new CapturePaymentResult();
 
-        //    try
-        //    {
-        //        var apiContext = PaypalHelper.GetApiContext(_paypalDirectPaymentSettings);
-        //        var authorization = Authorization.Get(apiContext, capturePaymentRequest.Order.AuthorizationTransactionId);
-        //        var currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
-        //        var capture = new Capture
-        //        {
-        //            amount = new Amount
-        //            {
-        //                total = capturePaymentRequest.Order.OrderTotal.ToString("N", new CultureInfo("en-US")),
-        //                currency = currency != null ? currency.CurrencyCode : null
-        //            },
-        //            is_final_capture = true
-        //        };
-        //        capture = authorization.Capture(apiContext, capture);
+            //    try
+            //    {
+            //        var apiContext = PaypalHelper.GetApiContext(_paypalDirectPaymentSettings);
+            //        var authorization = Authorization.Get(apiContext, capturePaymentRequest.Order.AuthorizationTransactionId);
+            //        var currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
+            //        var capture = new Capture
+            //        {
+            //            amount = new Amount
+            //            {
+            //                total = capturePaymentRequest.Order.OrderTotal.ToString("N", new CultureInfo("en-US")),
+            //                currency = currency != null ? currency.CurrencyCode : null
+            //            },
+            //            is_final_capture = true
+            //        };
+            //        capture = authorization.Capture(apiContext, capture);
 
-        //        result.CaptureTransactionId = capture.id;
-        //        result.CaptureTransactionResult = capture.state;
-        //        result.NewPaymentStatus = GetPaymentStatus(capture.state);
-        //    }
-        //    catch (PayPal.PayPalException exc)
-        //    {
-        //        if (exc is PayPal.ConnectionException)
-        //        {
-        //            var error = JsonFormatter.ConvertFromJson<Error>((exc as PayPal.ConnectionException).Response);
-        //            if (error != null)
-        //            {
-        //                result.AddError(string.Format("PayPal error: {0} ({1})", error.message, error.name));
-        //                if (error.details != null)
-        //                    error.details.ForEach(x => result.AddError(string.Format("{0} {1}", x.field, x.issue)));
-        //            }
-        //        }
+            //        result.CaptureTransactionId = capture.id;
+            //        result.CaptureTransactionResult = capture.state;
+            //        result.NewPaymentStatus = GetPaymentStatus(capture.state);
+            //    }
+            //    catch (PayPal.PayPalException exc)
+            //    {
+            //        if (exc is PayPal.ConnectionException)
+            //        {
+            //            var error = JsonFormatter.ConvertFromJson<Error>((exc as PayPal.ConnectionException).Response);
+            //            if (error != null)
+            //            {
+            //                result.AddError(string.Format("PayPal error: {0} ({1})", error.message, error.name));
+            //                if (error.details != null)
+            //                    error.details.ForEach(x => result.AddError(string.Format("{0} {1}", x.field, x.issue)));
+            //            }
+            //        }
 
-        //        //if there are not the specific errors add exception message
-        //        if (result.Success)
-        //            result.AddError(exc.InnerException != null ? exc.InnerException.Message : exc.Message);
-        //    }
+            //        //if there are not the specific errors add exception message
+            //        if (result.Success)
+            //            result.AddError(exc.InnerException != null ? exc.InnerException.Message : exc.Message);
+            //    }
 
             return result;
         }
@@ -989,7 +988,7 @@ namespace Nop.Plugin.Payments.Square
             //    }
 
             return result;
-    }
+        }
 
         /// <summary>
         /// Gets a value indicating whether customers can complete a payment after order is placed but not completed (for redirection payment methods)
@@ -1040,86 +1039,64 @@ namespace Nop.Plugin.Payments.Square
             return typeof(SquareController);
         }
 
-        ///// <summary>
-        ///// Install the plugin
-        ///// </summary>
-        //public override void Install()
-        //{
-        //    //settings
-        //    var settings = new PayPalDirectPaymentSettings
-        //    {
-        //        TransactMode = TransactMode.Authorize,
-        //        UseSandbox = true,
-        //    };
-        //    _settingService.SaveSetting(settings);
+        /// <summary>
+        /// Install the plugin
+        /// </summary>
+        public override void Install()
+        {
+            //settings
+            var settings = new SquarePaymentSettings
+            {
+                //TransactMode = TransactMode.Authorize,
+                UseSandbox = true,
+            };
+            _settingService.SaveSetting(settings);
 
-        //    //locales
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.AdditionalFee", "Additional fee");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.AdditionalFeePercentage.Hint", "Determines whether to apply a percentage additional fee to the order total. If not enabled, a fixed value is used.");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.ClientId", "Client ID");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.ClientId.Hint", "Specify client ID.");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.ClientSecret", "Client secret");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.ClientSecret.Hint", "Specify secret key.");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.PassPurchasedItems", "Pass purchased items");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.PassPurchasedItems.Hint", "Check to pass information about purchased items to PayPal.");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.TransactMode", "Transaction mode");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.TransactMode.Hint", "Choose transaction mode.");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.UseSandbox", "Use Sandbox");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.UseSandbox.Hint", "Check to enable Sandbox (testing environment).");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.WebhookId", "Webhook ID");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.WebhookId.Hint", "Specify webhook ID.");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.PaymentMethodDescription", "Pay by credit / debit card");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.WebhookCreate", "Get webhook ID");
-        //    this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalDirect.WebhookError", "Webhook was not created (see details in the log)");
+            //locales
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.LocationId", "Location Id");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.LocationId.Hint", "Specify location Id.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.ApplicationId", "Application Id");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.ApplicationId.Hint", "Specify application Id.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.AccessToken", "Personal Access Token");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.AccessToken.Hint", "Specify personal access token.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.UseSandbox", "Use Sandbox");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.UseSandbox.Hint", "Check to enable Sandbox (testing environment).");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxApplicationId", "Sandbox Application Id");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxApplicationId.Hint", "Specify sandbox application Id.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxAccessToken", "Sandbox Access Token");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxAccessToken.Hint", "Specify sandbox access token.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems", "Pass Purchase Items");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems.Hint", "Check to pass purchased item information to Square.");
 
-        //    base.Install();
-        //}
 
-        ///// <summary>
-        ///// Uninstall the plugin
-        ///// </summary>
-        //public override void Uninstall()
-        //{
-        //    //delete webhook
-        //    var settings = _settingService.LoadSetting<PayPalDirectPaymentSettings>();
-        //    if (!string.IsNullOrEmpty(settings.WebhookId))
-        //    {
-        //        try
-        //        {
-        //            var apiContext = PaypalHelper.GetApiContext(settings);
-        //            Webhook.Delete(apiContext, settings.WebhookId);
-        //        }
-        //        catch (PayPal.PayPalException) { }
-        //    }
+            
 
-        //    //settings
-        //    _settingService.DeleteSetting<PayPalDirectPaymentSettings>();
+            base.Install();
+        }
 
-        //    //locales
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.AdditionalFee");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.AdditionalFee.Hint");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.AdditionalFeePercentage");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.AdditionalFeePercentage.Hint");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.ClientId");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.ClientId.Hint");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.ClientSecret");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.ClientSecret.Hint");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.PassPurchasedItems");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.PassPurchasedItems.Hint");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.TransactMode");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.TransactMode.Hint");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.UseSandbox");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.UseSandbox.Hint");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.WebhookId");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.Fields.WebhookId.Hint");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.PaymentMethodDescription");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.WebhookCreate");
-        //    this.DeletePluginLocaleResource("Plugins.Payments.PayPalDirect.WebhookError");
+        /// <summary>
+        /// Uninstall the plugin
+        /// </summary>
+        public override void Uninstall()
+        {
+            //delete webhook
+            var settings = _settingService.LoadSetting<SquarePaymentSettings>();
 
-        //    base.Uninstall();
-        //}
+            //settings
+            _settingService.DeleteSetting<SquarePaymentSettings>();
+
+            //    //locales
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.LocationId");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.LocationId.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.ApplicationId");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.ApplicationId.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.AccessToken");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.AccessToken.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.UseSandbox");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.UseSandbox.Hint");
+
+            base.Uninstall();
+        }
 
         #endregion
 

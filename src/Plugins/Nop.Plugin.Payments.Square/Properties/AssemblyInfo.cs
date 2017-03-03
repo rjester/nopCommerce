@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Nop.Plugin.Payments.PayPalDirect")]
+[assembly: AssemblyTitle("Nop.Plugin.Payments.Square")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Nop Solutions, Ltd")]
-[assembly: AssemblyProduct("Nop.Plugin.Payments.PayPalDirect")]
-[assembly: AssemblyCopyright("Copyright © Nop Solutions, Ltd")]
+[assembly: AssemblyCompany("Russ Jester")]
+[assembly: AssemblyProduct("Nop.Plugin.Payments.Square")]
+[assembly: AssemblyCopyright("Copyright © Russ Jester")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

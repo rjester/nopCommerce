@@ -3,12 +3,12 @@ using Nop.Core.Configuration;
 namespace Nop.Plugin.Payments.Square
 {
     /// <summary>
-    /// PayPal Direct payment settings
+    /// Square payment settings
     /// </summary>
     public class SquarePaymentSettings : ISettings
     {
         /// <summary>
-        /// Gets or sets the client id
+        /// Gets or sets the application id
         /// </summary>
         public string ApplicationId { get; set; }
 
@@ -25,7 +25,17 @@ namespace Nop.Plugin.Payments.Square
         public bool UseSandbox { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to pass info about purchased items to PayPal
+        /// Gets or sets the sandbox application id
+        /// </summary>
+        public string SandboxApplicationId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the sandbox access token
+        /// </summary>
+        public string SandboxAccessToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to pass info about purchased items to Square
         /// </summary>
         public bool PassPurchasedItems{ get; set; }
     }

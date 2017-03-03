@@ -2,7 +2,7 @@
 FriendlyName: Square Processing
 SystemName: Payments.Square
 Version: 0.10
-SupportedVersions: 3.80
+SupportedVersions: 3.80, 3.90
 Author: Russ Jester
 DisplayOrder: 1
 FileName: Nop.Plugin.Payments.Square.dll
