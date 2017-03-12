@@ -1,7 +1,6 @@
 ﻿using System.Web.Mvc;
 using System.Web.Routing;
 using Nop.Web.Framework.Mvc.Routes;
-using Nop.Plugin.Payments.Square.ViewEngines;
 
 namespace Nop.Plugin.Payments.Square
 {
