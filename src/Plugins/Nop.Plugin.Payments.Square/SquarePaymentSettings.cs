@@ -35,6 +35,11 @@ namespace Nop.Plugin.Payments.Square
         public string SandboxAccessToken { get; set; }
 
         /// <summary>
+        /// Gets or sets the sandbox location id
+        /// </summary>
+        public string SandboxLocationId { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to pass info about purchased items to Square
         /// </summary>
         public bool PassPurchasedItems{ get; set; }

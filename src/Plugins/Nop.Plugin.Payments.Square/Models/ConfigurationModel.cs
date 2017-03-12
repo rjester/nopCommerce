@@ -32,6 +32,10 @@ namespace Nop.Plugin.Payments.Square.Models
         public bool UseSandbox { get; set; }
         public bool UseSandbox_OverrideForStore { get; set; }
 
+        [NopResourceDisplayName("Plugins.Payments.Square.Fields.SandboxLocationId")]
+        public string SandboxLocationId { get; set; }
+        public bool SandboxLocationId_OverrideForStore { get; set; }
+
         [NopResourceDisplayName("Plugins.Payments.Square.Fields.PassPurchasedItems")]
         public bool PassPurchasedItems { get; set; }
         public bool PassPurchasedItems_OverrideForStore { get; set; }

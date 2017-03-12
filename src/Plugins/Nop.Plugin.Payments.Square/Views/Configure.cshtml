@@ -84,6 +84,16 @@
                 </div>
                 <div class="form-group">
                     <div class="col-md-3">
+                        @*@Html.OverrideStoreCheckboxFor(model => model.SandboxLocationId_OverrideForStore, model => model.SandboxLocation_Id, Model.ActiveStoreScopeConfiguration)*@
+                        @Html.NopLabelFor(model => model.SandboxLocationId)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.SandboxLocationId)
+                        @Html.ValidationMessageFor(model => model.SandboxLocationId)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
                         @*@Html.OverrideStoreCheckboxFor(model => model.PassPurchasedItems_OverrideForStore, model => model.PassPurchasedItems, Model.ActiveStoreScopeConfiguration)*@
                         @Html.NopLabelFor(model => model.PassPurchasedItems)
                     </div>

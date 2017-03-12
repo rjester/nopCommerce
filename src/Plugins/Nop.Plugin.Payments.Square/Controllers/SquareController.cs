@@ -35,6 +35,7 @@ namespace Nop.Plugin.Payments.Square.Controllers
         private readonly IStoreService _storeService;
         private readonly IWorkContext _workContext;
         private readonly IWebHelper _webHelper;
+        private readonly SquarePaymentSettings _squarePaymentSettings;
 
         #endregion
 
@@ -48,7 +49,8 @@ namespace Nop.Plugin.Payments.Square.Controllers
             IStoreContext storeContext,
             IStoreService storeService,
             IWorkContext workContext,
-            IWebHelper webHelper)
+            IWebHelper webHelper,
+            SquarePaymentSettings squarePaymentSettings)
         {
             this._localizationService = localizationService;
             this._logger = logger;
@@ -59,6 +61,7 @@ namespace Nop.Plugin.Payments.Square.Controllers
             this._storeService = storeService;
             this._workContext = workContext;
             this._webHelper = webHelper;
+            this._squarePaymentSettings = squarePaymentSettings;
         }
 
         #endregion
@@ -136,6 +139,7 @@ namespace Nop.Plugin.Payments.Square.Controllers
                 UseSandbox = squarePaymentSettings.UseSandbox,
                 SandboxApplicationId = squarePaymentSettings.SandboxApplicationId,
                 SandboxAccessToken = squarePaymentSettings.SandboxAccessToken,
+                SandboxLocationId = squarePaymentSettings.SandboxLocationId,
                 PassPurchasedItems = squarePaymentSettings.PassPurchasedItems,
                 ActiveStoreScopeConfiguration = storeScope
             };
@@ -147,6 +151,7 @@ namespace Nop.Plugin.Payments.Square.Controllers
                 model.UseSandbox_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.UseSandbox, storeScope);
                 model.SandboxApplicationId_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.SandboxApplicationId, storeScope);
                 model.SandboxAccessToken_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.SandboxAccessToken, storeScope);
+                model.SandboxLocationId_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.SandboxLocationId, storeScope);
                 model.PassPurchasedItems_OverrideForStore = _settingService.SettingExists(squarePaymentSettings, x => x.PassPurchasedItems, storeScope);
             }
 
@@ -183,6 +188,7 @@ namespace Nop.Plugin.Payments.Square.Controllers
             _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.UseSandbox, model.UseSandbox_OverrideForStore, storeScope, false);
             _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.SandboxApplicationId, model.SandboxApplicationId_OverrideForStore, storeScope, false);
             _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.SandboxAccessToken, model.SandboxAccessToken_OverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.SandboxLocationId, model.SandboxLocationId_OverrideForStore, storeScope, false);
             _settingService.SaveSettingOverridablePerStore(squarePaymentSettings, x => x.PassPurchasedItems, model.PassPurchasedItems_OverrideForStore, storeScope, false);
             
             //now clear settings cache
@@ -239,6 +245,9 @@ namespace Nop.Plugin.Payments.Square.Controllers
             //    var selectedYear = model.ExpireYears.FirstOrDefault(x => x.Value.Equals(Request.Form["ExpireYear"], StringComparison.InvariantCultureIgnoreCase));
             //    if (selectedYear != null)
             //        selectedYear.Selected = true;
+
+            string sandboxId = _squarePaymentSettings.SandboxApplicationId;
+
 
             return View("~/Plugins/Payments.Square/Views/PaymentInfo.cshtml", model);
         }

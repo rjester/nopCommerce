@@ -1065,11 +1065,13 @@ namespace Nop.Plugin.Payments.Square
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxApplicationId.Hint", "Specify sandbox application Id.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxAccessToken", "Sandbox Access Token");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxAccessToken.Hint", "Specify sandbox access token.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxLocationId", "Sandbox Location Id");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxLocationId.Hint", "Specify a sandbox location Id.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems", "Pass Purchase Items");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems.Hint", "Check to pass purchased item information to Square.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.PaymentMethodDescription", "Pay by credit / debit card");
 
 
-            
 
             base.Install();
         }
@@ -1094,6 +1096,15 @@ namespace Nop.Plugin.Payments.Square
             this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.AccessToken.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.UseSandbox");
             this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.UseSandbox.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxLocationId");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxLocationId.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxApplicationId");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxApplicationId.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxAccessToken");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxAccessToken.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.PaymentMethodDescription");
 
             base.Uninstall();
         }
