@@ -21,6 +21,11 @@ using Nop.Services.Localization;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Tax;
+using Nop.Core.Domain.Common;
+using SqModel = Square.Connect.Model;
+using Square.Connect.Api;
+using Square.Connect.Client;
+using System.Net;
 
 namespace Nop.Plugin.Payments.Square
 {
@@ -45,6 +50,8 @@ namespace Nop.Plugin.Payments.Square
         private readonly ITaxService _taxService;
         private readonly IWebHelper _webHelper;
         private readonly SquarePaymentSettings _squarePaymentSettings;
+        private readonly IWorkContext _workContext;
+        private readonly ITransactionApi _transactionApi;
 
         #endregion
 
@@ -63,6 +70,7 @@ namespace Nop.Plugin.Payments.Square
             IStoreContext storeContext,
             ITaxService taxService,
             IWebHelper webHelper,
+            IWorkContext workContext,
             SquarePaymentSettings squarePaymentSettings)
         {
             this._currencySettings = currencySettings;
@@ -78,7 +86,12 @@ namespace Nop.Plugin.Payments.Square
             this._storeContext = storeContext;
             this._taxService = taxService;
             this._webHelper = webHelper;
+            this._workContext = workContext;
             this._squarePaymentSettings = squarePaymentSettings;
+
+            this._transactionApi = new TransactionApi((Configuration)null);
+            /// TODO: is this needed?
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         }
 
         #endregion
@@ -399,194 +412,259 @@ namespace Nop.Plugin.Payments.Square
         public ProcessPaymentResult ProcessPayment(ProcessPaymentRequest processPaymentRequest)
         {
             var result = new ProcessPaymentResult();
+            // get nonce
+            string cardNonce = processPaymentRequest.CustomValues["card-nonce"].ToString();
+            Customer customer = _customerService.GetCustomerById(processPaymentRequest.CustomerId);
+            if (customer == null)
+                throw new Exception("Customer cannot be loaded");
 
-            //    var customer = _customerService.GetCustomerById(processPaymentRequest.CustomerId);
-            //    if (customer == null)
-            //        throw new Exception("Customer cannot be loaded");
+            try
+            {
+                //        var apiContext = PaypalHelper.GetApiContext(_squarePaymentSettings);
 
-            //    try
-            //    {
-            //        var apiContext = PaypalHelper.GetApiContext(_squarePaymentSettings);
+                //        //currency
+                Currency currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
+                Address nopBillingAddress = _workContext.CurrentCustomer.BillingAddress;
+                var shoppingCart = _workContext.CurrentCustomer.ShoppingCartItems;
+                var chargeAmount = (long?)Math.Ceiling(processPaymentRequest.OrderTotal * new decimal(100));
+                var amountMoney = new SqModel.Money(chargeAmount, (SqModel.Money.CurrencyEnum)Enum.Parse(typeof(SqModel.Money.CurrencyEnum), currency.CurrencyCode));
+                string customerCardId = null;
+                // add authorizeonly to the settings
+                //bool? nullable1 = new bool?(_squarePaymentSettings.AuthorizeOnly);
+                // default value is false
+                bool? delayCapture = false;
 
-            //        //currency
-            //        var currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
+                // use as idempotency key and reference id
+                Guid orderGuid = processPaymentRequest.OrderGuid;
+                string idempotencyKey = orderGuid.ToString();
+                string note = null;
+                string customerId = null;
+                SqModel.Address billingAddress = new SqModel.Address();
+                SqModel.Address shippingAddress = new SqModel.Address();
+                string buyerEmailAddress = customer.Email;
+                SqModel.ChargeRequest chargeRequest = new SqModel.ChargeRequest(idempotencyKey, amountMoney, cardNonce, customerCardId, delayCapture, idempotencyKey, note, 
+                                                                    customerId, billingAddress, shippingAddress, buyerEmailAddress);
 
-            //        //get current shopping cart
-            //        var shoppingCart = customer.ShoppingCartItems
-            //            .Where(shoppingCartItem => shoppingCartItem.ShoppingCartType == ShoppingCartType.ShoppingCart)
-            //            .LimitPerStore(processPaymentRequest.StoreId).ToList();
 
-            //        //items
-            //        var items = GetItems(shoppingCart, customer, processPaymentRequest.StoreId, currency.CurrencyCode);
+                //string applicationId;
+                string accessToken;
+                string locationId;
+                if (_squarePaymentSettings.UseSandbox)
+                {
+                    //applicationId = _squarePaymentSettings.SandboxApplicationId;
+                    accessToken = _squarePaymentSettings.SandboxAccessToken;
+                    locationId = _squarePaymentSettings.SandboxLocationId;
+                }
+                else
+                {
+                    //applicationId = _squarePaymentSettings.ApplicationId;
+                    accessToken = _squarePaymentSettings.AccessToken;
+                    locationId = _squarePaymentSettings.LocationId;
+                }
 
-            //        //amount details
-            //        var amountDetails = GetAmountDetails(processPaymentRequest, shoppingCart, items);
+                SqModel.ChargeResponse chargeResponse = this._transactionApi.Charge(accessToken, locationId, chargeRequest);
+                if ((chargeResponse.Errors == null ? false : chargeResponse.Errors.Count != 0))
+                {
+                    chargeResponse.Errors.ForEach((SqModel.Error e) => result.AddError(e.Detail));
+                }
+                else
+                {
+                    result.AuthorizationTransactionResult = chargeResponse.Transaction.Tenders[0].Id;
+                    if (delayCapture.HasValue)
+                    {
+                        if (!delayCapture.Value)
+                        {
+                            result.CaptureTransactionId = chargeResponse.Transaction.Id;
+                            result.NewPaymentStatus = PaymentStatus.Paid;
+                        }
+                        else
+                        {
+                            result.AuthorizationTransactionId = chargeResponse.Transaction.Id;
+                            result.NewPaymentStatus = PaymentStatus.Authorized;
+                        }
+                    }
+                    else
+                    {
+                        // if delayCapture is null default to delayCatoure = false
+                        result.CaptureTransactionId = chargeResponse.Transaction.Id;
+                        result.NewPaymentStatus = PaymentStatus.Paid;
+                    }
+                }
 
-            //        //payment
-            //        var payment = new Payment()
-            //        {
-            //            #region payer
+                ////get current shopping cart
+                //var shoppingCart = customer.ShoppingCartItems
+                //    .Where(shoppingCartItem => shoppingCartItem.ShoppingCartType == ShoppingCartType.ShoppingCart)
+                //    .LimitPerStore(processPaymentRequest.StoreId).ToList();
 
-            //            payer = new Payer()
-            //            {
-            //                payment_method = "credit_card",
+                //        //items
+                //        var items = GetItems(shoppingCart, customer, processPaymentRequest.StoreId, currency.CurrencyCode);
 
-            //                #region credit card info
+                //        //amount details
+                //        var amountDetails = GetAmountDetails(processPaymentRequest, shoppingCart, items);
 
-            //                funding_instruments = new List<FundingInstrument>
-            //                {
-            //                    new FundingInstrument
-            //                    {
-            //                        credit_card = new CreditCard
-            //                        {
-            //                            type = processPaymentRequest.CreditCardType.ToLowerInvariant(),
-            //                            number = processPaymentRequest.CreditCardNumber,
-            //                            cvv2 = processPaymentRequest.CreditCardCvv2,
-            //                            expire_month = processPaymentRequest.CreditCardExpireMonth,
-            //                            expire_year = processPaymentRequest.CreditCardExpireYear
-            //                        }
-            //                    }
-            //                },
+                //        //payment
+                //        var payment = new Payment()
+                //        {
+                //            #region payer
 
-            //                #endregion
+                //            payer = new Payer()
+                //            {
+                //                payment_method = "credit_card",
 
-            //                #region payer info
+                //                #region credit card info
 
-            //                payer_info = new PayerInfo
-            //                {
-            //                    #region billing address
+                //                funding_instruments = new List<FundingInstrument>
+                //                {
+                //                    new FundingInstrument
+                //                    {
+                //                        credit_card = new CreditCard
+                //                        {
+                //                            type = processPaymentRequest.CreditCardType.ToLowerInvariant(),
+                //                            number = processPaymentRequest.CreditCardNumber,
+                //                            cvv2 = processPaymentRequest.CreditCardCvv2,
+                //                            expire_month = processPaymentRequest.CreditCardExpireMonth,
+                //                            expire_year = processPaymentRequest.CreditCardExpireYear
+                //                        }
+                //                    }
+                //                },
 
-            //                    billing_address = customer.BillingAddress == null ? null : new Address
-            //                    {
-            //                        country_code = customer.BillingAddress.Country != null ? customer.BillingAddress.Country.TwoLetterIsoCode : null,
-            //                        state = customer.BillingAddress.StateProvince != null ? customer.BillingAddress.StateProvince.Abbreviation : null,
-            //                        city = customer.BillingAddress.City,
-            //                        line1 = customer.BillingAddress.Address1,
-            //                        line2 = customer.BillingAddress.Address2,
-            //                        phone = customer.BillingAddress.PhoneNumber,
-            //                        postal_code = customer.BillingAddress.ZipPostalCode
-            //                    },
+                //                #endregion
+                //#region billing address
 
-            //                    #endregion
+                //var billing_address = customer.BillingAddress == null ? null : new Nop.Core.Domain.Common.Address
+                //{
+                //    country_code = customer.BillingAddress.Country != null ? customer.BillingAddress.Country.TwoLetterIsoCode : null,
+                //    StateProvince = customer.BillingAddress.StateProvince != null ? customer.BillingAddress.StateProvince.Abbreviation : null,
+                //    City = customer.BillingAddress.City,
+                //    Address1 = customer.BillingAddress.Address1,
+                //    Address2 = customer.BillingAddress.Address2,
+                //    PhoneNumber = customer.BillingAddress.PhoneNumber,
+                //    ZipPostalCode = customer.BillingAddress.ZipPostalCode
+                //},
 
-            //                    email = customer.BillingAddress != null ? customer.BillingAddress.Email : null,
-            //                    first_name = customer.BillingAddress != null ? customer.BillingAddress.FirstName : null,
-            //                    last_name = customer.BillingAddress != null ? customer.BillingAddress.LastName : null
-            //                }
+                //    #endregion
+                //#region payer info
 
-            //                #endregion
-            //            },
+                //payer_info = new PayerInfo
+                //{
+                //    email = customer.BillingAddress != null ? customer.BillingAddress.Email : null,
+                //    first_name = customer.BillingAddress != null ? customer.BillingAddress.FirstName : null,
+                //    last_name = customer.BillingAddress != null ? customer.BillingAddress.LastName : null
+                //}
 
-            //            #endregion
+                //                #endregion
+                //},
 
-            //            #region transaction
+                #endregion
 
-            //            transactions = new List<Transaction>()
-            //            {
-            //                new Transaction
-            //                {
-            //                    #region amount
+                //            #region transaction
 
-            //                    amount = new Amount
-            //                    {
-            //                        details = amountDetails,
-            //                        total = processPaymentRequest.OrderTotal.ToString("N", new CultureInfo("en-US")),
-            //                        currency = currency != null ? currency.CurrencyCode : null
-            //                    },
+                //            transactions = new List<Transaction>()
+                //            {
+                //                new Transaction
+                //                {
+                //                    #region amount
 
-            //                    #endregion
+                //                    amount = new Amount
+                //                    {
+                //                        details = amountDetails,
+                //                        total = processPaymentRequest.OrderTotal.ToString("N", new CultureInfo("en-US")),
+                //                        currency = currency != null ? currency.CurrencyCode : null
+                //                    },
 
-            //                    item_list = new ItemList
-            //                    {
-            //                        items = items,
+                //                    #endregion
 
-            //                        #region shipping address
+                //                    item_list = new ItemList
+                //                    {
+                //                        items = items,
 
-            //                        shipping_address = customer.ShippingAddress == null ? null : new ShippingAddress
-            //                        {
-            //                            country_code = customer.ShippingAddress.Country != null ? customer.ShippingAddress.Country.TwoLetterIsoCode : null,
-            //                            state = customer.ShippingAddress.StateProvince != null ? customer.ShippingAddress.StateProvince.Abbreviation : null,
-            //                            city = customer.ShippingAddress.City,
-            //                            line1 = customer.ShippingAddress.Address1,
-            //                            line2 = customer.ShippingAddress.Address2,
-            //                            phone = customer.ShippingAddress.PhoneNumber,
-            //                            postal_code = customer.ShippingAddress.ZipPostalCode,
-            //                            recipient_name = string.Format("{0} {1}", customer.ShippingAddress.FirstName, customer.ShippingAddress.LastName)
-            //                        }
+                //                        #region shipping address
 
-            //                        #endregion
-            //                    },
+                //                        shipping_address = customer.ShippingAddress == null ? null : new ShippingAddress
+                //                        {
+                //                            country_code = customer.ShippingAddress.Country != null ? customer.ShippingAddress.Country.TwoLetterIsoCode : null,
+                //                            state = customer.ShippingAddress.StateProvince != null ? customer.ShippingAddress.StateProvince.Abbreviation : null,
+                //                            city = customer.ShippingAddress.City,
+                //                            line1 = customer.ShippingAddress.Address1,
+                //                            line2 = customer.ShippingAddress.Address2,
+                //                            phone = customer.ShippingAddress.PhoneNumber,
+                //                            postal_code = customer.ShippingAddress.ZipPostalCode,
+                //                            recipient_name = string.Format("{0} {1}", customer.ShippingAddress.FirstName, customer.ShippingAddress.LastName)
+                //                        }
 
-            //                    invoice_number = processPaymentRequest.OrderGuid != Guid.Empty ? processPaymentRequest.OrderGuid.ToString() : null
-            //                }
-            //            },
+                //                        #endregion
+                //                    },
 
-            //            #endregion
+                //                    invoice_number = processPaymentRequest.OrderGuid != Guid.Empty ? processPaymentRequest.OrderGuid.ToString() : null
+                //                }
+                //            },
 
-            //            intent = _squarePaymentSettings.TransactMode == TransactMode.Authorize ? "authorize" : "sale",
-            //        }.Create(apiContext);
+                //            #endregion
 
-            //        if (payment.transactions[0].related_resources.Any() && payment.transactions[0].related_resources[0] != null)
-            //            if (_squarePaymentSettings.TransactMode == TransactMode.Authorize)
-            //            {
-            //                var authorization = payment.transactions[0].related_resources[0].authorization;
-            //                if (authorization != null)
-            //                {
-            //                    if (authorization.fmf_details != null && !string.IsNullOrEmpty(authorization.fmf_details.filter_id))
-            //                    {
-            //                        result.AuthorizationTransactionResult = string.Format("Authorization is {0}. Based on fraud filter: {1}. {2}",
-            //                            authorization.fmf_details.filter_type, authorization.fmf_details.name, authorization.fmf_details.description);
-            //                        result.NewPaymentStatus = GetPaymentStatus(Authorization.Get(apiContext, authorization.id).state);
-            //                    }
-            //                    else
-            //                    {
-            //                        result.AuthorizationTransactionResult = authorization.state;
-            //                        result.NewPaymentStatus = GetPaymentStatus(authorization.state);
-            //                    }
-            //                    result.AuthorizationTransactionId = authorization.id;
-            //                }
-            //            }
-            //            else
-            //            {
-            //                var sale = payment.transactions[0].related_resources[0].sale;
-            //                if (sale != null)
-            //                {
-            //                    if (sale.fmf_details != null && !string.IsNullOrEmpty(sale.fmf_details.filter_id))
-            //                    {
-            //                        result.CaptureTransactionResult = string.Format("Sale is {0}. Based on fraud filter: {1}. {2}",
-            //                            sale.fmf_details.filter_type, sale.fmf_details.name, sale.fmf_details.description);
-            //                        result.NewPaymentStatus = GetPaymentStatus(Sale.Get(apiContext, sale.id).state);
-            //                    }
-            //                    else
-            //                    {
-            //                        result.CaptureTransactionResult = sale.state;
-            //                        result.NewPaymentStatus = GetPaymentStatus(sale.state);
-            //                    }
-            //                    result.CaptureTransactionId = sale.id;
-            //                    result.AvsResult = sale.processor_response != null ? sale.processor_response.avs_code : string.Empty;
+                //            intent = _squarePaymentSettings.TransactMode == TransactMode.Authorize ? "authorize" : "sale",
+                //        }.Create(apiContext);
 
-            //                }
-            //            }
-            //        else
-            //            result.AddError("PayPal error");
-            //    }
-            //    catch (PayPal.PayPalException exc)
-            //    {
-            //        if (exc is PayPal.ConnectionException)
-            //        {
-            //            var error = JsonFormatter.ConvertFromJson<Error>((exc as PayPal.ConnectionException).Response);
-            //            if (error != null)
-            //            {
-            //                result.AddError(string.Format("Square error: {0} ({1})", error.message, error.name));
-            //                if (error.details != null)
-            //                    error.details.ForEach(x => result.AddError(string.Format("{0} {1}", x.field, x.issue)));
-            //            }
-            //        }
+                //        if (payment.transactions[0].related_resources.Any() && payment.transactions[0].related_resources[0] != null)
+                //            if (_squarePaymentSettings.TransactMode == TransactMode.Authorize)
+                //            {
+                //                var authorization = payment.transactions[0].related_resources[0].authorization;
+                //                if (authorization != null)
+                //                {
+                //                    if (authorization.fmf_details != null && !string.IsNullOrEmpty(authorization.fmf_details.filter_id))
+                //                    {
+                //                        result.AuthorizationTransactionResult = string.Format("Authorization is {0}. Based on fraud filter: {1}. {2}",
+                //                            authorization.fmf_details.filter_type, authorization.fmf_details.name, authorization.fmf_details.description);
+                //                        result.NewPaymentStatus = GetPaymentStatus(Authorization.Get(apiContext, authorization.id).state);
+                //                    }
+                //                    else
+                //                    {
+                //                        result.AuthorizationTransactionResult = authorization.state;
+                //                        result.NewPaymentStatus = GetPaymentStatus(authorization.state);
+                //                    }
+                //                    result.AuthorizationTransactionId = authorization.id;
+                //                }
+                //            }
+                //            else
+                //            {
+                //                var sale = payment.transactions[0].related_resources[0].sale;
+                //                if (sale != null)
+                //                {
+                //                    if (sale.fmf_details != null && !string.IsNullOrEmpty(sale.fmf_details.filter_id))
+                //                    {
+                //                        result.CaptureTransactionResult = string.Format("Sale is {0}. Based on fraud filter: {1}. {2}",
+                //                            sale.fmf_details.filter_type, sale.fmf_details.name, sale.fmf_details.description);
+                //                        result.NewPaymentStatus = GetPaymentStatus(Sale.Get(apiContext, sale.id).state);
+                //                    }
+                //                    else
+                //                    {
+                //                        result.CaptureTransactionResult = sale.state;
+                //                        result.NewPaymentStatus = GetPaymentStatus(sale.state);
+                //                    }
+                //                    result.CaptureTransactionId = sale.id;
+                //                    result.AvsResult = sale.processor_response != null ? sale.processor_response.avs_code : string.Empty;
 
-            //        //if there are not the specific errors add exception message
-            //        if (result.Success)
-            //            result.AddError(exc.InnerException != null ? exc.InnerException.Message : exc.Message);
-            //    }
+                //                }
+                //            }
+                //        else
+                //            result.AddError("PayPal error");
+            }
+            catch (Exception exc)
+            {
+                //        if (exc is PayPal.ConnectionException)
+                //        {
+                //            var error = JsonFormatter.ConvertFromJson<Error>((exc as PayPal.ConnectionException).Response);
+                //            if (error != null)
+                //            {
+                //                result.AddError(string.Format("Square error: {0} ({1})", error.message, error.name));
+                //                if (error.details != null)
+                //                    error.details.ForEach(x => result.AddError(string.Format("{0} {1}", x.field, x.issue)));
+                //            }
+                //        }
+
+                //        //if there are not the specific errors add exception message
+                //        if (result.Success)
+                //            result.AddError(exc.InnerException != null ? exc.InnerException.Message : exc.Message);
+            }
 
             return result;
         }
@@ -1070,8 +1148,10 @@ namespace Nop.Plugin.Payments.Square
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems", "Pass Purchase Items");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems.Hint", "Check to pass purchased item information to Square.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.PaymentMethodDescription", "Pay by credit / debit card");
-
-
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.CardNumber", "Card Number");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.CVV", "CVV");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.ExpirationDate", "Expiration Date");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PostalCode", "Postal Code");
 
             base.Install();
         }
@@ -1109,7 +1189,6 @@ namespace Nop.Plugin.Payments.Square
             base.Uninstall();
         }
 
-        #endregion
 
         #region Properties
 

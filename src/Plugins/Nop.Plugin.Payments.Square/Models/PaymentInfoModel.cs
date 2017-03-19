@@ -14,6 +14,11 @@ namespace Nop.Plugin.Payments.Square.Models
             ExpireYears = new List<SelectListItem>();
         }
 
+        public string ApplicationId { get; set; }
+        public string AccessToken { get; set; }
+        public string LocationId { get; set; }
+        public bool UseSandbox { get; set; }
+
         [NopResourceDisplayName("Payment.SelectCreditCard")]
         [AllowHtml]
         public string CreditCardType { get; set; }

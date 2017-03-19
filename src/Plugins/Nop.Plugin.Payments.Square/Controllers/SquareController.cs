@@ -174,9 +174,11 @@ namespace Nop.Plugin.Payments.Square.Controllers
             ////save settings
             squarePaymentSettings.ApplicationId = model.ApplicationId;
             squarePaymentSettings.AccessToken = model.AccessToken;
+            squarePaymentSettings.LocationId = model.LocationId;
             squarePaymentSettings.UseSandbox = model.UseSandbox;
             squarePaymentSettings.SandboxApplicationId = model.SandboxApplicationId;
             squarePaymentSettings.SandboxAccessToken = model.SandboxAccessToken;
+            squarePaymentSettings.SandboxLocationId = model.SandboxLocationId;
             squarePaymentSettings.PassPurchasedItems = model.PassPurchasedItems;
 
             /* We do not clear cache after each setting update.
@@ -246,8 +248,20 @@ namespace Nop.Plugin.Payments.Square.Controllers
             //    if (selectedYear != null)
             //        selectedYear.Selected = true;
 
-            string sandboxId = _squarePaymentSettings.SandboxApplicationId;
+            model.UseSandbox = _squarePaymentSettings.UseSandbox;
 
+            if (_squarePaymentSettings.UseSandbox)
+            {
+                model.ApplicationId= _squarePaymentSettings.SandboxApplicationId;
+                model.AccessToken = _squarePaymentSettings.SandboxAccessToken;
+                model.LocationId = _squarePaymentSettings.SandboxLocationId;
+            }
+            else
+            {
+                model.ApplicationId = _squarePaymentSettings.ApplicationId;
+                model.AccessToken = _squarePaymentSettings.AccessToken;
+                model.LocationId = _squarePaymentSettings.LocationId;
+            }
 
             return View("~/Plugins/Payments.Square/Views/PaymentInfo.cshtml", model);
         }
@@ -276,14 +290,9 @@ namespace Nop.Plugin.Payments.Square.Controllers
         [NonAction]
         public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
         {
-            return new ProcessPaymentRequest
-            {
-                CreditCardType = form["CreditCardType"],
-                CreditCardNumber = form["CardNumber"],
-                CreditCardExpireMonth = int.Parse(form["ExpireMonth"]),
-                CreditCardExpireYear = int.Parse(form["ExpireYear"]),
-                CreditCardCvv2 = form["CardCode"]
-            };
+            ProcessPaymentRequest paymentRequest = new ProcessPaymentRequest();
+            paymentRequest.CustomValues["card-nonce"] = form["nonce"];
+            return paymentRequest;
         }
         #endregion
     }
