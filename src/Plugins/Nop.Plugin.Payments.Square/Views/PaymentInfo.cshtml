@@ -2,10 +2,6 @@
 @{
     Layout = "";
 }
-<!--
-      These div elements are the placeholder elements that are replaced by the
-      SqPaymentForm's iframes.
-    -->
 @if (Model.UseSandbox)
 {
     <h3>*** Sandbox Mode ***</h3>
@@ -49,6 +45,9 @@
         margin-top: 8px;
         margin-bottom: 5px;
         height: 25px;
+    }
+    .payment-error {
+        color: red;
     }
 </style>
 <script type="text/javascript">
@@ -104,13 +103,14 @@
             callbacks: {
                 cardNonceResponseReceived: function (errors, nonce, cardData) {
                     if (errors) {
-                        var errorDiv = document.getElementById('errors');
-                        errorDiv.innerHTML = "";
+                        $('.payment-error').text('');
+                        var errorMessages = [];
                         errors.forEach(function (error) {
-                            var p = document.createElement('p');
-                            p.innerHTML = error.message;
-                            errorDiv.appendChild(p);
+                            if (errorMessages.indexOf(error.message) < 0)
+                                errorMessages.push(error.message);
                         });
+                        $(".payment-error").append(errorMessages.join("<br />"));
+                        $(".payment-info-next-step-button").removeAttr("disabled");
                     } else {
                         var nonceToken = nonce;
                         var paymentForm = $(".payment-info-next-step-button").closest('form');
@@ -165,3 +165,4 @@
         //}
     }
 </script>
+<div class="payment-error"></div>

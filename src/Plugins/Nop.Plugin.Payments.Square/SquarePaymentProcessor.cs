@@ -26,6 +26,8 @@ using SqModel = Square.Connect.Model;
 using Square.Connect.Api;
 using Square.Connect.Client;
 using System.Net;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Nop.Plugin.Payments.Square
 {
@@ -34,8 +36,6 @@ namespace Nop.Plugin.Payments.Square
     /// </summary>
     public class SquarePaymentProcessor : BasePlugin, IPaymentMethod
     {
-        #region Fields
-
         private readonly CurrencySettings _currencySettings;
         private readonly ICheckoutAttributeParser _checkoutAttributeParser;
         private readonly ICurrencyService _currencyService;
@@ -52,10 +52,7 @@ namespace Nop.Plugin.Payments.Square
         private readonly SquarePaymentSettings _squarePaymentSettings;
         private readonly IWorkContext _workContext;
         private readonly ITransactionApi _transactionApi;
-
-        #endregion
-
-        #region Ctor
+        private readonly IRefundApi _refundApi;
 
         public SquarePaymentProcessor(CurrencySettings currencySettings,
             ICheckoutAttributeParser checkoutAttributeParser,
@@ -90,13 +87,10 @@ namespace Nop.Plugin.Payments.Square
             this._squarePaymentSettings = squarePaymentSettings;
 
             this._transactionApi = new TransactionApi((Configuration)null);
+            this._refundApi = new RefundApi((Configuration)null);
             /// TODO: is this needed?
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            //ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         }
-
-        #endregion
-
-        #region Utilities
 
         ///// <summary>
         ///// Gets a payment status
@@ -165,8 +159,6 @@ namespace Nop.Plugin.Payments.Square
 
         //    return string.Format("{0}Z", startDate.ToString("s"));
         //}
-
-        //#region Items
 
         ///// <summary>
         ///// Get PayPal items
@@ -357,8 +349,6 @@ namespace Nop.Plugin.Payments.Square
         //    };
         //}
 
-        //#endregion
-
         ///// <summary>
         ///// Get transaction amount details
         ///// </summary>
@@ -400,10 +390,6 @@ namespace Nop.Plugin.Payments.Square
         //    };
         //}
 
-        #endregion
-
-        #region Methods
-
         /// <summary>
         /// Process a payment
         /// </summary>
@@ -420,9 +406,6 @@ namespace Nop.Plugin.Payments.Square
 
             try
             {
-                //        var apiContext = PaypalHelper.GetApiContext(_squarePaymentSettings);
-
-                //        //currency
                 Currency currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
                 Address nopBillingAddress = _workContext.CurrentCustomer.BillingAddress;
                 var shoppingCart = _workContext.CurrentCustomer.ShoppingCartItems;
@@ -442,7 +425,7 @@ namespace Nop.Plugin.Payments.Square
                 SqModel.Address billingAddress = new SqModel.Address();
                 SqModel.Address shippingAddress = new SqModel.Address();
                 string buyerEmailAddress = customer.Email;
-                SqModel.ChargeRequest chargeRequest = new SqModel.ChargeRequest(idempotencyKey, amountMoney, cardNonce, customerCardId, delayCapture, idempotencyKey, note, 
+                SqModel.ChargeRequest chargeRequest = new SqModel.ChargeRequest(idempotencyKey, amountMoney, cardNonce, customerCardId, delayCapture, idempotencyKey, note,
                                                                     customerId, billingAddress, shippingAddress, buyerEmailAddress);
 
 
@@ -485,185 +468,19 @@ namespace Nop.Plugin.Payments.Square
                     }
                     else
                     {
-                        // if delayCapture is null default to delayCatoure = false
+                        // if delayCapture is null default to delayCapture = false
                         result.CaptureTransactionId = chargeResponse.Transaction.Id;
                         result.NewPaymentStatus = PaymentStatus.Paid;
                     }
                 }
-
-                ////get current shopping cart
-                //var shoppingCart = customer.ShoppingCartItems
-                //    .Where(shoppingCartItem => shoppingCartItem.ShoppingCartType == ShoppingCartType.ShoppingCart)
-                //    .LimitPerStore(processPaymentRequest.StoreId).ToList();
-
-                //        //items
-                //        var items = GetItems(shoppingCart, customer, processPaymentRequest.StoreId, currency.CurrencyCode);
-
-                //        //amount details
-                //        var amountDetails = GetAmountDetails(processPaymentRequest, shoppingCart, items);
-
-                //        //payment
-                //        var payment = new Payment()
-                //        {
-                //            #region payer
-
-                //            payer = new Payer()
-                //            {
-                //                payment_method = "credit_card",
-
-                //                #region credit card info
-
-                //                funding_instruments = new List<FundingInstrument>
-                //                {
-                //                    new FundingInstrument
-                //                    {
-                //                        credit_card = new CreditCard
-                //                        {
-                //                            type = processPaymentRequest.CreditCardType.ToLowerInvariant(),
-                //                            number = processPaymentRequest.CreditCardNumber,
-                //                            cvv2 = processPaymentRequest.CreditCardCvv2,
-                //                            expire_month = processPaymentRequest.CreditCardExpireMonth,
-                //                            expire_year = processPaymentRequest.CreditCardExpireYear
-                //                        }
-                //                    }
-                //                },
-
-                //                #endregion
-                //#region billing address
-
-                //var billing_address = customer.BillingAddress == null ? null : new Nop.Core.Domain.Common.Address
-                //{
-                //    country_code = customer.BillingAddress.Country != null ? customer.BillingAddress.Country.TwoLetterIsoCode : null,
-                //    StateProvince = customer.BillingAddress.StateProvince != null ? customer.BillingAddress.StateProvince.Abbreviation : null,
-                //    City = customer.BillingAddress.City,
-                //    Address1 = customer.BillingAddress.Address1,
-                //    Address2 = customer.BillingAddress.Address2,
-                //    PhoneNumber = customer.BillingAddress.PhoneNumber,
-                //    ZipPostalCode = customer.BillingAddress.ZipPostalCode
-                //},
-
-                //    #endregion
-                //#region payer info
-
-                //payer_info = new PayerInfo
-                //{
-                //    email = customer.BillingAddress != null ? customer.BillingAddress.Email : null,
-                //    first_name = customer.BillingAddress != null ? customer.BillingAddress.FirstName : null,
-                //    last_name = customer.BillingAddress != null ? customer.BillingAddress.LastName : null
-                //}
-
-                //                #endregion
-                //},
-
-                #endregion
-
-                //            #region transaction
-
-                //            transactions = new List<Transaction>()
-                //            {
-                //                new Transaction
-                //                {
-                //                    #region amount
-
-                //                    amount = new Amount
-                //                    {
-                //                        details = amountDetails,
-                //                        total = processPaymentRequest.OrderTotal.ToString("N", new CultureInfo("en-US")),
-                //                        currency = currency != null ? currency.CurrencyCode : null
-                //                    },
-
-                //                    #endregion
-
-                //                    item_list = new ItemList
-                //                    {
-                //                        items = items,
-
-                //                        #region shipping address
-
-                //                        shipping_address = customer.ShippingAddress == null ? null : new ShippingAddress
-                //                        {
-                //                            country_code = customer.ShippingAddress.Country != null ? customer.ShippingAddress.Country.TwoLetterIsoCode : null,
-                //                            state = customer.ShippingAddress.StateProvince != null ? customer.ShippingAddress.StateProvince.Abbreviation : null,
-                //                            city = customer.ShippingAddress.City,
-                //                            line1 = customer.ShippingAddress.Address1,
-                //                            line2 = customer.ShippingAddress.Address2,
-                //                            phone = customer.ShippingAddress.PhoneNumber,
-                //                            postal_code = customer.ShippingAddress.ZipPostalCode,
-                //                            recipient_name = string.Format("{0} {1}", customer.ShippingAddress.FirstName, customer.ShippingAddress.LastName)
-                //                        }
-
-                //                        #endregion
-                //                    },
-
-                //                    invoice_number = processPaymentRequest.OrderGuid != Guid.Empty ? processPaymentRequest.OrderGuid.ToString() : null
-                //                }
-                //            },
-
-                //            #endregion
-
-                //            intent = _squarePaymentSettings.TransactMode == TransactMode.Authorize ? "authorize" : "sale",
-                //        }.Create(apiContext);
-
-                //        if (payment.transactions[0].related_resources.Any() && payment.transactions[0].related_resources[0] != null)
-                //            if (_squarePaymentSettings.TransactMode == TransactMode.Authorize)
-                //            {
-                //                var authorization = payment.transactions[0].related_resources[0].authorization;
-                //                if (authorization != null)
-                //                {
-                //                    if (authorization.fmf_details != null && !string.IsNullOrEmpty(authorization.fmf_details.filter_id))
-                //                    {
-                //                        result.AuthorizationTransactionResult = string.Format("Authorization is {0}. Based on fraud filter: {1}. {2}",
-                //                            authorization.fmf_details.filter_type, authorization.fmf_details.name, authorization.fmf_details.description);
-                //                        result.NewPaymentStatus = GetPaymentStatus(Authorization.Get(apiContext, authorization.id).state);
-                //                    }
-                //                    else
-                //                    {
-                //                        result.AuthorizationTransactionResult = authorization.state;
-                //                        result.NewPaymentStatus = GetPaymentStatus(authorization.state);
-                //                    }
-                //                    result.AuthorizationTransactionId = authorization.id;
-                //                }
-                //            }
-                //            else
-                //            {
-                //                var sale = payment.transactions[0].related_resources[0].sale;
-                //                if (sale != null)
-                //                {
-                //                    if (sale.fmf_details != null && !string.IsNullOrEmpty(sale.fmf_details.filter_id))
-                //                    {
-                //                        result.CaptureTransactionResult = string.Format("Sale is {0}. Based on fraud filter: {1}. {2}",
-                //                            sale.fmf_details.filter_type, sale.fmf_details.name, sale.fmf_details.description);
-                //                        result.NewPaymentStatus = GetPaymentStatus(Sale.Get(apiContext, sale.id).state);
-                //                    }
-                //                    else
-                //                    {
-                //                        result.CaptureTransactionResult = sale.state;
-                //                        result.NewPaymentStatus = GetPaymentStatus(sale.state);
-                //                    }
-                //                    result.CaptureTransactionId = sale.id;
-                //                    result.AvsResult = sale.processor_response != null ? sale.processor_response.avs_code : string.Empty;
-
-                //                }
-                //            }
-                //        else
-                //            result.AddError("PayPal error");
             }
-            catch (Exception exc)
+            catch (ApiException exc)
             {
-                //        if (exc is PayPal.ConnectionException)
-                //        {
-                //            var error = JsonFormatter.ConvertFromJson<Error>((exc as PayPal.ConnectionException).Response);
-                //            if (error != null)
-                //            {
-                //                result.AddError(string.Format("Square error: {0} ({1})", error.message, error.name));
-                //                if (error.details != null)
-                //                    error.details.ForEach(x => result.AddError(string.Format("{0} {1}", x.field, x.issue)));
-                //            }
-                //        }
-
-                //        //if there are not the specific errors add exception message
-                //        if (result.Success)
-                //            result.AddError(exc.InnerException != null ? exc.InnerException.Message : exc.Message);
+                var error = JObject.Parse(exc.ErrorContent);
+                for (int i = 0; i < error.errors.Count; i++)
+                {
+                    result.AddError(error.errors[i].detail.ToString());
+                }
             }
 
             return result;
@@ -763,39 +580,57 @@ namespace Nop.Plugin.Payments.Square
         {
             var result = new RefundPaymentResult();
 
-            //    try
-            //    {
-            //        var apiContext = PaypalHelper.GetApiContext(_paypalDirectPaymentSettings);
-            //        var currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
-            //        var refundRequest = new RefundRequest
-            //        {
-            //            amount = new Amount
-            //            {
-            //                total = refundPaymentRequest.AmountToRefund.ToString("N", new CultureInfo("en-US")),
-            //                currency = currency != null ? currency.CurrencyCode : null
-            //            }
-            //        };
-            //        PayPal.Api.Capture.Refund(apiContext, refundPaymentRequest.Order.CaptureTransactionId, refundRequest);
-            //        var capture = PayPal.Api.Capture.Get(apiContext, refundPaymentRequest.Order.CaptureTransactionId);
-            //        result.NewPaymentStatus = GetPaymentStatus(capture.state);
-            //    }
-            //    catch (PayPal.PayPalException exc)
-            //    {
-            //        if (exc is PayPal.ConnectionException)
-            //        {
-            //            var error = JsonFormatter.ConvertFromJson<Error>((exc as PayPal.ConnectionException).Response);
-            //            if (error != null)
-            //            {
-            //                result.AddError(string.Format("PayPal error: {0} ({1})", error.message, error.name));
-            //                if (error.details != null)
-            //                    error.details.ForEach(x => result.AddError(string.Format("{0} {1}", x.field, x.issue)));
-            //            }
-            //        }
+            try
+            {
+                Currency currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
+                var refundAmount = (long?)Math.Ceiling(refundPaymentRequest.AmountToRefund * new decimal(100));
+                SqModel.Money refundMoney = new SqModel.Money(refundAmount, 
+                                                            (SqModel.Money.CurrencyEnum)Enum.Parse(
+                                                                    typeof(SqModel.Money.CurrencyEnum), 
+                                                                    currency.CurrencyCode));
+                Guid idempotencyKey = Guid.NewGuid();
+                string transactionId = refundPaymentRequest.Order.AuthorizationTransactionResult;
+                string reason = null;
+                SqModel.CreateRefundRequest createRefundRequest = new SqModel.CreateRefundRequest(idempotencyKey.ToString(), 
+                                                                                        transactionId, reason, refundMoney);
 
-            //        //if there are not the specific errors add exception message
-            //        if (result.Success)
-            //            result.AddError(exc.InnerException != null ? exc.InnerException.Message : exc.Message);
-            //    }
+                string accessToken;
+                string locationId;
+                if (_squarePaymentSettings.UseSandbox)
+                {
+                    accessToken = _squarePaymentSettings.SandboxAccessToken;
+                    locationId = _squarePaymentSettings.SandboxLocationId;
+                }
+                else
+                {
+                    accessToken = _squarePaymentSettings.AccessToken;
+                    locationId = _squarePaymentSettings.LocationId;
+                }
+
+                SqModel.CreateRefundResponse refundResponse = this._refundApi.CreateRefund(accessToken, 
+                                                                    locationId, 
+                                                                    refundPaymentRequest.Order.CaptureTransactionId, 
+                                                                    createRefundRequest);
+                if ((refundResponse.Errors == null ? false : refundResponse.Errors.Count != 0))
+                {
+                    refundResponse.Errors.ForEach((SqModel.Error e) => result.AddError(e.Detail));
+                }
+                else
+                {
+                    result.NewPaymentStatus = refundPaymentRequest.IsPartialRefund ? 
+                                                                    PaymentStatus.PartiallyRefunded : 
+                                                                    PaymentStatus.Refunded;
+
+                }
+            }
+            catch (ApiException exc)
+            {
+                var error = JObject.Parse(exc.ErrorContent);
+                for (int i = 0; i < error.errors.Count; i++)
+                {
+                    result.AddError(error.errors[i].detail.ToString());
+                }
+            }
 
             return result;
         }
@@ -926,13 +761,9 @@ namespace Nop.Plugin.Payments.Square
             //            //setting start date as the next date of recurring payments as the setup fee was the first payment
             //            start_date = GetStartDate(processPaymentRequest.RecurringCyclePeriod, processPaymentRequest.RecurringCycleLength),
 
-            //            #region payer
-
             //            payer = new Payer()
             //            {
             //                payment_method = "credit_card",
-
-            //                #region credit card info
 
             //                funding_instruments = new List<FundingInstrument>
             //                {
@@ -949,14 +780,8 @@ namespace Nop.Plugin.Payments.Square
             //                    }
             //                },
 
-            //                #endregion
-
-            //                #region payer info
-
             //                payer_info = new PayerInfo
             //                {
-            //                    #region billing address
-
             //                    billing_address = customer.BillingAddress == null ? null : new Address
             //                    {
             //                        country_code = customer.BillingAddress.Country != null ? customer.BillingAddress.Country.TwoLetterIsoCode : null,
@@ -968,19 +793,12 @@ namespace Nop.Plugin.Payments.Square
             //                        postal_code = customer.BillingAddress.ZipPostalCode
             //                    },
 
-            //                    #endregion
-
             //                    email = customer.BillingAddress.Email,
             //                    first_name = customer.BillingAddress.FirstName,
             //                    last_name = customer.BillingAddress.LastName
             //                }
 
-            //                #endregion
             //            },
-
-            //            #endregion
-
-            //            #region shipping address
 
             //            shipping_address = customer.ShippingAddress == null ? null : new ShippingAddress
             //            {
@@ -992,8 +810,6 @@ namespace Nop.Plugin.Payments.Square
             //                phone = customer.ShippingAddress.PhoneNumber,
             //                postal_code = customer.ShippingAddress.ZipPostalCode
             //            },
-
-            //            #endregion
 
             //            plan = new Plan
             //            {
@@ -1189,9 +1005,6 @@ namespace Nop.Plugin.Payments.Square
             base.Uninstall();
         }
 
-
-        #region Properties
-
         /// <summary>
         /// Gets a value indicating whether capture is supported
         /// </summary>
@@ -1257,7 +1070,5 @@ namespace Nop.Plugin.Payments.Square
             //for example, for a redirection payment method, description may be like this: "You will be redirected to PayPal site to complete the payment"
             get { return _localizationService.GetResource("Plugins.Payments.Square.PaymentMethodDescription"); }
         }
-
-        #endregion
     }
 }

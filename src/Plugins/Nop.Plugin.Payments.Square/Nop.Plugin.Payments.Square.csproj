@@ -70,7 +70,6 @@
     <Compile Include="Controllers\SquareController.cs" />
     <Compile Include="Models\ConfigurationModel.cs" />
     <Compile Include="Models\PaymentInfoModel.cs" />
-    <Compile Include="SquareHelper.cs" />
     <Compile Include="SquarePaymentProcessor.cs" />
     <Compile Include="SquarePaymentSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
