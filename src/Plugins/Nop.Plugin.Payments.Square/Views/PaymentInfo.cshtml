@@ -1,0 +1,168 @@
+﻿@model Nop.Plugin.Payments.Square.Models.PaymentInfoModel
+@{
+    Layout = "";
+}
+@if (Model.UseSandbox)
+{
+    <h3>*** Sandbox Mode ***</h3>
+}
+<div class="form-group">
+    <label>@T("Plugins.Payments.Square.Fields.CardNumber")</label>
+    <div id="sq-card-number"></div>
+</div>
+<label>@T("Plugins.Payments.Square.Fields.CVV")</label>
+<div id="sq-cvv"></div>
+<label>@T("Plugins.Payments.Square.Fields.ExpirationDate")</label>
+<div id="sq-expiration-date"></div>
+<label>@T("Plugins.Payments.Square.Fields.PostalCode")</label>
+<div id="sq-postal-code"></div>
+<!--
+  After the SqPaymentForm generates a card nonce, *this* form POSTs the generated
+  card nonce to your application's server.
+
+  You should replace the action attribute of the form with the path of
+  the URL you want to POST the nonce to (for example, "/process-card")
+-->
+@*<form id="nonce-form" novalidate action="REPLACE_ME" method="post">*@
+
+    <!--
+      Whenever a nonce is generated, it's assigned as the value of this hidden
+      input field.
+    -->
+    <input type="hidden" id="card-nonce" name="nonce">
+
+    <!--
+      Clicking this Submit button kicks off the process to generate a card nonce
+      from the buyer's card information.
+    -->
+    @*<input type="submit" onclick="requestCardNonce(event)">*@
+@*</form>*@
+<style type="text/css">
+    .sq-input {
+        border: 1px solid rgb(223, 223, 223);
+        outline-offset: -2px;
+        padding-top: 2px;
+        margin-top: 8px;
+        margin-bottom: 5px;
+        height: 25px;
+    }
+    .payment-error {
+        color: red;
+    }
+</style>
+<script type="text/javascript">
+    $(function () {
+        $.getScript("https://js.squareup.com/v2/paymentform", function (data, status, xhr) {
+            EmbedPaymentFormCallback();
+        });
+    });
+
+    function EmbedPaymentFormCallback() {
+        debugger;
+        $(".payment-info-next-step-button").removeAttr("onClick");
+        var appId = '@Model.ApplicationId';
+
+        var sqPaymentForm = new SqPaymentForm({
+            // Replace this value with your application's ID (available from the merchant dashboard).
+            // If you're just testing things out, replace this with your _Sandbox_ application ID,
+            // which is also available there.
+            applicationId: appId,
+            inputClass: 'sq-input',
+            cardNumber: {
+                elementId: 'sq-card-number',
+                placeholder: "0000 0000 0000 0000"
+            },
+            cvv: {
+                elementId: 'sq-cvv',
+                placeholder: 'CVV'
+            },
+            expirationDate: {
+                elementId: 'sq-expiration-date',
+                placeholder: 'MM/YY'
+            },
+            postalCode: {
+                elementId: 'sq-postal-code',
+                placeholder: 'Postal Code'
+            },
+            inputStyles: [
+              // Because this object provides no value for mediaMaxWidth or mediaMinWidth,
+              // these styles apply for screens of all sizes, unless overridden by another
+              // input style below.
+              {
+                  fontSize: '14px',
+                  padding: '3px'
+              },
+              // These styles are applied to inputs ONLY when the screen width is 400px
+              // or smaller. Note that because it doesn't specify a value for padding,
+              // the padding value in the previous object is preserved.
+              {
+                  mediaMaxWidth: '400px',
+                  fontSize: '18px',
+              }
+            ],
+            callbacks: {
+                cardNonceResponseReceived: function (errors, nonce, cardData) {
+                    if (errors) {
+                        $('.payment-error').text('');
+                        var errorMessages = [];
+                        errors.forEach(function (error) {
+                            if (errorMessages.indexOf(error.message) < 0)
+                                errorMessages.push(error.message);
+                        });
+                        $(".payment-error").append(errorMessages.join("<br />"));
+                        $(".payment-info-next-step-button").removeAttr("disabled");
+                    } else {
+                        var nonceToken = nonce;
+                        var paymentForm = $(".payment-info-next-step-button").closest('form');
+                        $("#card-nonce").val(nonceToken);
+                        if (document.location.href.indexOf('onepagecheckout') > -1) {
+                            PaymentInfo.save();
+                        }
+                        else {
+                            paymentForm.submit();
+                        }
+                        //// This alert is for debugging purposes only.
+                        //alert('Nonce received! ' + nonce + ' ' + JSON.stringify(cardData));
+                        //// Assign the value of the nonce to a hidden form element
+                        //var nonceField = document.getElementById('card-nonce');
+                        //nonceField.value = nonce;
+
+
+                    }
+                    
+                },
+                unsupportedBrowserDetected: function () {
+                    // Alert the buyer that their browser is not supported
+                }
+            }
+        });
+        sqPaymentForm.build();
+
+        function cardNonceCallback(errors, nonce, cardData) {
+
+        }
+
+        $(".payment-info-next-step-button").unbind().click(function (event) {
+            $('.submit-button').attr("disabled", "disabled");
+
+            sqPaymentForm.requestCardNonce();
+
+            return false;
+        });
+        //function submitButtonClick(event) {
+        //    event.preventDefault();
+        //    sqPaymentForm.requestCardNonce();
+        //}
+        //function SendNonce() {
+        //    PageMethods.Charge(document.getElementById('cardNonce').value, OnSuccess);
+        //}
+        //function Clear() {
+        //    // Submit the form
+        //    document.getElementById('form').submit();
+        //}
+        //function OnSuccess(response, userContext, methodName) {
+        //    alert(response);
+        //}
+    }
+</script>
+<div class="payment-error"></div>
