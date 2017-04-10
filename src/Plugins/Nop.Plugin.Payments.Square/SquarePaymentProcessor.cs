@@ -441,7 +441,7 @@ namespace Nop.Plugin.Payments.Square
                     billingAddress.PostalCode = nopBillingAddress.ZipPostalCode != null ? nopBillingAddress.ZipPostalCode : String.Empty;
                     billingAddress.Country = nopBillingAddress.Country != null ? 
                                             (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopBillingAddress.Country.TwoLetterIsoCode) : 
-                                            (SqModel.Address.CountryEnum?)null;
+                                            default(SqModel.Address.CountryEnum?);
 
                     //SqModel.Address billingAddress = new SqModel.Address(nopBillingAddress.Address1, nopBillingAddress.Address2, Locality: nopBillingAddress.City,
                     //                                            AdministrativeDistrictLevel1: nopBillingAddress.StateProvince.Abbreviation, PostalCode: nopBillingAddress.ZipPostalCode,
@@ -449,14 +449,23 @@ namespace Nop.Plugin.Payments.Square
                     //                                            FirstName: nopBillingAddress.FirstName, LastName: nopBillingAddress.LastName);
                 }
 
-                //if (nopShippingAddress != null)
-                //{
-                //    shippingAddress.AddressLine1 = nopShippingAddress.Address1 != null ? nopShippingAddress.Address1 : String.Empty;
-                //    //shippingAddress = new SqModel.Address(nopShippingAddress.Address1, nopShippingAddress.Address2, Locality: nopShippingAddress.City,
-                //    //                                            AdministrativeDistrictLevel1: nopShippingAddress.StateProvince.Abbreviation, PostalCode: nopShippingAddress.ZipPostalCode,
-                //    //                                            Country: (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopShippingAddress.Country.TwoLetterIsoCode),
-                //    //                                            FirstName: nopShippingAddress.FirstName, LastName: nopShippingAddress.LastName);
-                //}
+                if (nopShippingAddress != null)
+                {
+                    shippingAddress.AddressLine1 = nopShippingAddress.Address1 != null ? nopShippingAddress.Address1 : String.Empty;
+                    shippingAddress.AddressLine2 = nopShippingAddress.Address2 != null ? nopShippingAddress.Address2 : String.Empty;
+                    shippingAddress.Locality = nopShippingAddress.City != null ? nopShippingAddress.City : String.Empty;
+                    shippingAddress.AdministrativeDistrictLevel1 = nopShippingAddress.StateProvince != null ? nopShippingAddress.StateProvince.Abbreviation : String.Empty;
+                    shippingAddress.PostalCode = nopShippingAddress.ZipPostalCode != null ? nopShippingAddress.ZipPostalCode : String.Empty;
+                    shippingAddress.Country = nopShippingAddress.Country != null ?
+                                            (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopShippingAddress.Country.TwoLetterIsoCode) :
+                                            default(SqModel.Address.CountryEnum?);
+
+                    //    shippingAddress.AddressLine1 = nopShippingAddress.Address1 != null ? nopShippingAddress.Address1 : String.Empty;
+                    //    //shippingAddress = new SqModel.Address(nopShippingAddress.Address1, nopShippingAddress.Address2, Locality: nopShippingAddress.City,
+                    //    //                                            AdministrativeDistrictLevel1: nopShippingAddress.StateProvince.Abbreviation, PostalCode: nopShippingAddress.ZipPostalCode,
+                    //    //                                            Country: (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopShippingAddress.Country.TwoLetterIsoCode),
+                    //    //                                            FirstName: nopShippingAddress.FirstName, LastName: nopShippingAddress.LastName);
+                }
                 string buyerEmailAddress = customer.Email;
                 SqModel.ChargeRequest chargeRequest = new SqModel.ChargeRequest(idempotencyKey, amountMoney, cardNonce, customerCardId, delayCapture, idempotencyKey, note,
                                                                     customerId, billingAddress, shippingAddress, buyerEmailAddress);
