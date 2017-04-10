@@ -1,7 +1,7 @@
 ﻿Group: Payment methods
 FriendlyName: Square Processing
 SystemName: Payments.Square
-Version: 0.50
+Version: 0.75
 SupportedVersions: 3.90
 Author: Russ Jester
 DisplayOrder: 1

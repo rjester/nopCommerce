@@ -28,6 +28,7 @@ using Square.Connect.Client;
 using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Nop.Services.Logging;
 
 namespace Nop.Plugin.Payments.Square
 {
@@ -53,6 +54,8 @@ namespace Nop.Plugin.Payments.Square
         private readonly IWorkContext _workContext;
         private readonly ITransactionApi _transactionApi;
         private readonly IRefundApi _refundApi;
+        //private readonly ICheckoutApi _checkoutApi;
+        private readonly ILogger _logger;
 
         public SquarePaymentProcessor(CurrencySettings currencySettings,
             ICheckoutAttributeParser checkoutAttributeParser,
@@ -68,6 +71,7 @@ namespace Nop.Plugin.Payments.Square
             ITaxService taxService,
             IWebHelper webHelper,
             IWorkContext workContext,
+            ILogger logger,
             SquarePaymentSettings squarePaymentSettings)
         {
             this._currencySettings = currencySettings;
@@ -85,9 +89,11 @@ namespace Nop.Plugin.Payments.Square
             this._webHelper = webHelper;
             this._workContext = workContext;
             this._squarePaymentSettings = squarePaymentSettings;
+            this._logger = logger;
 
             this._transactionApi = new TransactionApi((Configuration)null);
             this._refundApi = new RefundApi((Configuration)null);
+            //this._checkoutApi = new CheckoutApi((Configuration)null);
             /// TODO: is this needed?
             //ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         }
@@ -399,7 +405,7 @@ namespace Nop.Plugin.Payments.Square
         {
             var result = new ProcessPaymentResult();
             // get nonce
-            string cardNonce = processPaymentRequest.CustomValues["card-nonce"].ToString();
+            string cardNonce = processPaymentRequest.CustomValues["Authorization"].ToString();
             Customer customer = _customerService.GetCustomerById(processPaymentRequest.CustomerId);
             if (customer == null)
                 throw new Exception("Customer cannot be loaded");
@@ -408,7 +414,8 @@ namespace Nop.Plugin.Payments.Square
             {
                 Currency currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
                 Address nopBillingAddress = _workContext.CurrentCustomer.BillingAddress;
-                var shoppingCart = _workContext.CurrentCustomer.ShoppingCartItems;
+                Address nopShippingAddress = _workContext.CurrentCustomer.ShippingAddress;
+                var shoppingCart = _workContext.CurrentCustomer.ShoppingCartItems.Where(shoppingCartItem => shoppingCartItem.ShoppingCartType == ShoppingCartType.ShoppingCart).ToList();
                 var chargeAmount = (long?)Math.Ceiling(processPaymentRequest.OrderTotal * new decimal(100));
                 var amountMoney = new SqModel.Money(chargeAmount, (SqModel.Money.CurrencyEnum)Enum.Parse(typeof(SqModel.Money.CurrencyEnum), currency.CurrencyCode));
                 string customerCardId = null;
@@ -422,8 +429,15 @@ namespace Nop.Plugin.Payments.Square
                 string idempotencyKey = orderGuid.ToString();
                 string note = null;
                 string customerId = null;
-                SqModel.Address billingAddress = new SqModel.Address();
-                SqModel.Address shippingAddress = new SqModel.Address();
+                SqModel.Address billingAddress = new SqModel.Address(nopBillingAddress.Address1, nopBillingAddress.Address2, Locality: nopBillingAddress.City,
+                                                                AdministrativeDistrictLevel1: nopBillingAddress.StateProvince.Abbreviation, PostalCode: nopBillingAddress.ZipPostalCode,
+                                                                Country: (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopBillingAddress.Country.TwoLetterIsoCode),
+                                                                FirstName: nopBillingAddress.FirstName, LastName: nopBillingAddress.LastName);
+
+                SqModel.Address shippingAddress = new SqModel.Address(nopShippingAddress.Address1, nopShippingAddress.Address2, Locality: nopShippingAddress.City,
+                                                                AdministrativeDistrictLevel1: nopShippingAddress.StateProvince.Abbreviation, PostalCode: nopShippingAddress.ZipPostalCode,
+                                                                Country: (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopShippingAddress.Country.TwoLetterIsoCode),
+                                                                FirstName: nopShippingAddress.FirstName, LastName: nopShippingAddress.LastName);
                 string buyerEmailAddress = customer.Email;
                 SqModel.ChargeRequest chargeRequest = new SqModel.ChargeRequest(idempotencyKey, amountMoney, cardNonce, customerCardId, delayCapture, idempotencyKey, note,
                                                                     customerId, billingAddress, shippingAddress, buyerEmailAddress);
@@ -444,6 +458,30 @@ namespace Nop.Plugin.Payments.Square
                     accessToken = _squarePaymentSettings.AccessToken;
                     locationId = _squarePaymentSettings.LocationId;
                 }
+
+                //if (_squarePaymentSettings.PassPurchasedItems)
+                //{
+                //    List<SqModel.CreateOrderRequestLineItem> lineItems = new List<SqModel.CreateOrderRequestLineItem>();
+                //    foreach (var shoppingCartItem in shoppingCart)
+                //    {
+                //        var lineItemAmount = (long?)Math.Ceiling(shoppingCartItem.Product.Price * new decimal(100));
+                //        SqModel.CreateOrderRequestLineItem lineItem = new SqModel.CreateOrderRequestLineItem(
+                //            shoppingCartItem.Product.Name,
+                //            shoppingCartItem.Quantity.ToString(),
+                //            new SqModel.Money(lineItemAmount, (SqModel.Money.CurrencyEnum)Enum.Parse(typeof(SqModel.Money.CurrencyEnum), currency.CurrencyCode)));
+
+                //        lineItems.Add(lineItem);
+                //    }
+
+                //    SqModel.CreateOrderRequestOrder orderRequest = new SqModel.CreateOrderRequestOrder(idempotencyKey, lineItems);
+                //    SqModel.CreateCheckoutRequest checkoutRequest = new SqModel.CreateCheckoutRequest(idempotencyKey, orderRequest);
+                //    SqModel.CreateCheckoutResponse checkoutResponse = this._checkoutApi.CreateCheckout(accessToken, locationId, checkoutRequest);
+
+                //    if (checkoutResponse.Errors == null ? false : checkoutResponse.Errors.Count != 0)
+                //    {
+                //        checkoutResponse.Errors.ForEach((SqModel.Error e) => result.AddError(e.Detail));
+                //    }
+                //}
 
                 SqModel.ChargeResponse chargeResponse = this._transactionApi.Charge(accessToken, locationId, chargeRequest);
                 if ((chargeResponse.Errors == null ? false : chargeResponse.Errors.Count != 0))
@@ -479,8 +517,15 @@ namespace Nop.Plugin.Payments.Square
                 var error = JObject.Parse(exc.ErrorContent);
                 for (int i = 0; i < error.errors.Count; i++)
                 {
+                    //_logger.Error(exc.Message + ":" + exc.StackTrace, exc);
                     result.AddError(error.errors[i].detail.ToString());
                 }
+            }
+            catch (Exception exc)
+            {
+                _logger.Error(exc.Message + ":" + exc.StackTrace, exc);
+                //_logger.Error(exc.Message, exc);
+                throw;
             }
 
             return result;
@@ -961,13 +1006,18 @@ namespace Nop.Plugin.Payments.Square
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxAccessToken.Hint", "Specify sandbox access token.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxLocationId", "Sandbox Location Id");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.SandboxLocationId.Hint", "Specify a sandbox location Id.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems", "Pass Purchase Items");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems", "Pass Purchased Items");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems.Hint", "Check to pass purchased item information to Square.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.PaymentMethodDescription", "Pay by credit / debit card");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.CardNumber", "Card Number");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.CVV", "CVV");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.ExpirationDate", "Expiration Date");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Fields.PostalCode", "Postal Code");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Errors.NonceRequired", "Card authorization required.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Errors.InvalidCard", "Invalid card number.", null);
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Errors.ExpiredCard", "Your card is expired.", null);
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Errors.CvcRequired", "Cvc code is required.", null);
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Square.Errors.UnsupportedBrowser", "The browser you are using is not supported. Please try a different browser.", null);
 
             base.Install();
         }
@@ -1001,6 +1051,11 @@ namespace Nop.Plugin.Payments.Square
             this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems");
             this.DeletePluginLocaleResource("Plugins.Payments.Square.Fields.PassPurchasedItems.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.Square.PaymentMethodDescription");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Errors.NonceRequired");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Errors.InvalidCard");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Errors.ExpiredCard");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Errors.CvcRequired");
+            this.DeletePluginLocaleResource("Plugins.Payments.Square.Errors.UnsupportedBrowser");
 
             base.Uninstall();
         }

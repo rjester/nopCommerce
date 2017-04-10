@@ -29,7 +29,7 @@
       Whenever a nonce is generated, it's assigned as the value of this hidden
       input field.
     -->
-    <input type="hidden" id="card-nonce" name="nonce">
+    <input type="hidden" id="nonce" name="nonce">
 
     <!--
       Clicking this Submit button kicks off the process to generate a card nonce
@@ -58,7 +58,6 @@
     });
 
     function EmbedPaymentFormCallback() {
-        debugger;
         $(".payment-info-next-step-button").removeAttr("onClick");
         var appId = '@Model.ApplicationId';
 
@@ -114,22 +113,14 @@
                     } else {
                         var nonceToken = nonce;
                         var paymentForm = $(".payment-info-next-step-button").closest('form');
-                        $("#card-nonce").val(nonceToken);
+                        $("#nonce").val(nonceToken);
                         if (document.location.href.indexOf('onepagecheckout') > -1) {
                             PaymentInfo.save();
                         }
                         else {
                             paymentForm.submit();
                         }
-                        //// This alert is for debugging purposes only.
-                        //alert('Nonce received! ' + nonce + ' ' + JSON.stringify(cardData));
-                        //// Assign the value of the nonce to a hidden form element
-                        //var nonceField = document.getElementById('card-nonce');
-                        //nonceField.value = nonce;
-
-
                     }
-                    
                 },
                 unsupportedBrowserDetected: function () {
                     // Alert the buyer that their browser is not supported

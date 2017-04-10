@@ -19,6 +19,8 @@ using Nop.Web.Framework.Controllers;
 using Nop.Plugin.Payments.Square.Models;
 //using PayPal.Api;
 using Square.Connect;
+using Nop.Core.Plugins;
+using Nop.Core.Domain.Localization;
 
 namespace Nop.Plugin.Payments.Square.Controllers
 {
@@ -35,6 +37,7 @@ namespace Nop.Plugin.Payments.Square.Controllers
         private readonly IStoreService _storeService;
         private readonly IWorkContext _workContext;
         private readonly IWebHelper _webHelper;
+        private readonly IPluginFinder _pluginFinder;
         private readonly SquarePaymentSettings _squarePaymentSettings;
 
         #endregion
@@ -50,6 +53,7 @@ namespace Nop.Plugin.Payments.Square.Controllers
             IStoreService storeService,
             IWorkContext workContext,
             IWebHelper webHelper,
+            IPluginFinder pluginFinder,
             SquarePaymentSettings squarePaymentSettings)
         {
             this._localizationService = localizationService;
@@ -61,6 +65,7 @@ namespace Nop.Plugin.Payments.Square.Controllers
             this._storeService = storeService;
             this._workContext = workContext;
             this._webHelper = webHelper;
+            this._pluginFinder = pluginFinder;
             this._squarePaymentSettings = squarePaymentSettings;
         }
 
@@ -263,13 +268,17 @@ namespace Nop.Plugin.Payments.Square.Controllers
                 model.LocationId = _squarePaymentSettings.LocationId;
             }
 
-            return View("~/Plugins/Payments.Square/Views/PaymentInfo.cshtml", model);
+            PluginDescriptor pluginDescriptorBySystemName = this._pluginFinder.GetPluginDescriptorBySystemName("SevenSpikes.Nop.Plugins.RealOnePageCheckout", LoadPluginsMode.InstalledOnly);
+            ActionResult actionResult = ((pluginDescriptorBySystemName == null ? false : pluginDescriptorBySystemName.Installed) ? 
+                base.View("~/Plugins/Payments.Square/Views/PaymentInfoOnePageCheckout.cshtml", model) : 
+                base.View("~/Plugins/Payments.Square/Views/PaymentInfo.cshtml", model));
+            return actionResult; // View("~/Plugins/Payments.Square/Views/PaymentInfo.cshtml", model);
         }
 
         [NonAction]
         public override IList<string> ValidatePaymentForm(FormCollection form)
         {
-            var warnings = new List<string>();
+            //var warnings = new List<string>();
 
         //    //validate
         //    var validator = new PaymentInfoValidator(_localizationService);
@@ -284,14 +293,34 @@ namespace Nop.Plugin.Payments.Square.Controllers
         //    if (!validationResult.IsValid)
         //        warnings.AddRange(validationResult.Errors.Select(error => error.ErrorMessage));
 
-            return warnings;
-        }
+            //return warnings;
+
+            string resourceValue;
+            List<string> strs = new List<string>();
+            if (string.IsNullOrEmpty(form["nonce"]))
+            {
+                List<string> strs1 = strs;
+                LocaleStringResource localeStringResourceByName = this._localizationService.GetLocaleStringResourceByName("Plugins.Payments.Square.Errors.NonceRequired");
+                if (localeStringResourceByName != null)
+                {
+                    resourceValue = localeStringResourceByName.ResourceValue;
+                }
+                else
+                {
+                    resourceValue = null;
+                }
+                strs1.Add(resourceValue);
+            }
+            return strs;
+
+
+    }
 
         [NonAction]
         public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
         {
             ProcessPaymentRequest paymentRequest = new ProcessPaymentRequest();
-            paymentRequest.CustomValues["card-nonce"] = form["nonce"];
+            paymentRequest.CustomValues["Authorization"] = form["nonce"];
             return paymentRequest;
         }
         #endregion

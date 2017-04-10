@@ -239,7 +239,7 @@ namespace Nop.Web
                 var workContext = EngineContext.Current.Resolve<IWorkContext>();
                 logger.Error(exc.Message, exc, workContext.CurrentCustomer);
             }
-            catch (Exception)
+            catch (Exception) 
             {
                 //don't throw new exception if occurs
             }
