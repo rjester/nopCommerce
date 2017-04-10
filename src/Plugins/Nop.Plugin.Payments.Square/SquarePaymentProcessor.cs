@@ -435,8 +435,13 @@ namespace Nop.Plugin.Payments.Square
                 if (nopBillingAddress != null)
                 {
                     billingAddress.AddressLine1 = nopBillingAddress.Address1 != null ? nopBillingAddress.Address1 : String.Empty;
+                    billingAddress.AddressLine2 = nopBillingAddress.Address2 != null ? nopBillingAddress.Address2 : String.Empty;
+                    billingAddress.Locality = nopBillingAddress.City != null ? nopBillingAddress.City : String.Empty;
+                    billingAddress.AdministrativeDistrictLevel1 = nopBillingAddress.StateProvince != null ? nopBillingAddress.StateProvince.Abbreviation : String.Empty;
                     billingAddress.PostalCode = nopBillingAddress.ZipPostalCode != null ? nopBillingAddress.ZipPostalCode : String.Empty;
-
+                    billingAddress.Country = nopBillingAddress.Country != null ? 
+                                            (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopBillingAddress.Country.TwoLetterIsoCode) : 
+                                            (SqModel.Address.CountryEnum?)null;
 
                     //SqModel.Address billingAddress = new SqModel.Address(nopBillingAddress.Address1, nopBillingAddress.Address2, Locality: nopBillingAddress.City,
                     //                                            AdministrativeDistrictLevel1: nopBillingAddress.StateProvince.Abbreviation, PostalCode: nopBillingAddress.ZipPostalCode,
