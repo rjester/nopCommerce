@@ -54,7 +54,7 @@ namespace Nop.Plugin.Payments.Square
         private readonly IWorkContext _workContext;
         private readonly ITransactionApi _transactionApi;
         private readonly IRefundApi _refundApi;
-        //private readonly ICheckoutApi _checkoutApi;
+        private readonly ICheckoutApi _checkoutApi;
         private readonly ILogger _logger;
 
         public SquarePaymentProcessor(CurrencySettings currencySettings,
@@ -93,7 +93,7 @@ namespace Nop.Plugin.Payments.Square
 
             this._transactionApi = new TransactionApi((Configuration)null);
             this._refundApi = new RefundApi((Configuration)null);
-            //this._checkoutApi = new CheckoutApi((Configuration)null);
+            this._checkoutApi = new CheckoutApi((Configuration)null);
             /// TODO: is this needed?
             //ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         }
@@ -487,29 +487,29 @@ namespace Nop.Plugin.Payments.Square
                     locationId = _squarePaymentSettings.LocationId;
                 }
 
-                //if (_squarePaymentSettings.PassPurchasedItems)
-                //{
-                //    List<SqModel.CreateOrderRequestLineItem> lineItems = new List<SqModel.CreateOrderRequestLineItem>();
-                //    foreach (var shoppingCartItem in shoppingCart)
-                //    {
-                //        var lineItemAmount = (long?)Math.Ceiling(shoppingCartItem.Product.Price * new decimal(100));
-                //        SqModel.CreateOrderRequestLineItem lineItem = new SqModel.CreateOrderRequestLineItem(
-                //            shoppingCartItem.Product.Name,
-                //            shoppingCartItem.Quantity.ToString(),
-                //            new SqModel.Money(lineItemAmount, (SqModel.Money.CurrencyEnum)Enum.Parse(typeof(SqModel.Money.CurrencyEnum), currency.CurrencyCode)));
+                if (_squarePaymentSettings.PassPurchasedItems)
+                {
+                    List<SqModel.CreateOrderRequestLineItem> lineItems = new List<SqModel.CreateOrderRequestLineItem>();
+                    foreach (var shoppingCartItem in shoppingCart)
+                    {
+                        var lineItemAmount = (long?)Math.Ceiling(shoppingCartItem.Product.Price * new decimal(100));
+                        SqModel.CreateOrderRequestLineItem lineItem = new SqModel.CreateOrderRequestLineItem(
+                            shoppingCartItem.Product.Name,
+                            shoppingCartItem.Quantity.ToString(),
+                            new SqModel.Money(lineItemAmount, (SqModel.Money.CurrencyEnum)Enum.Parse(typeof(SqModel.Money.CurrencyEnum), currency.CurrencyCode)));
 
-                //        lineItems.Add(lineItem);
-                //    }
+                        lineItems.Add(lineItem);
+                    }
 
-                //    SqModel.CreateOrderRequestOrder orderRequest = new SqModel.CreateOrderRequestOrder(idempotencyKey, lineItems);
-                //    SqModel.CreateCheckoutRequest checkoutRequest = new SqModel.CreateCheckoutRequest(idempotencyKey, orderRequest);
-                //    SqModel.CreateCheckoutResponse checkoutResponse = this._checkoutApi.CreateCheckout(accessToken, locationId, checkoutRequest);
+                    SqModel.CreateOrderRequestOrder orderRequest = new SqModel.CreateOrderRequestOrder(idempotencyKey, lineItems);
+                    SqModel.CreateCheckoutRequest checkoutRequest = new SqModel.CreateCheckoutRequest(idempotencyKey, orderRequest);
+                    SqModel.CreateCheckoutResponse checkoutResponse = this._checkoutApi.CreateCheckout(accessToken, locationId, checkoutRequest);
 
-                //    if (checkoutResponse.Errors == null ? false : checkoutResponse.Errors.Count != 0)
-                //    {
-                //        checkoutResponse.Errors.ForEach((SqModel.Error e) => result.AddError(e.Detail));
-                //    }
-                //}
+                    if (checkoutResponse.Errors == null ? false : checkoutResponse.Errors.Count != 0)
+                    {
+                        checkoutResponse.Errors.ForEach((SqModel.Error e) => result.AddError(e.Detail));
+                    }
+                }
 
                 SqModel.ChargeResponse chargeResponse = this._transactionApi.Charge(accessToken, locationId, chargeRequest);
                 if ((chargeResponse.Errors == null ? false : chargeResponse.Errors.Count != 0))
