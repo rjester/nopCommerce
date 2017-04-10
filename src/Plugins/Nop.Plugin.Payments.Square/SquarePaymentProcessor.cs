@@ -415,6 +415,8 @@ namespace Nop.Plugin.Payments.Square
                 Currency currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
                 Address nopBillingAddress = _workContext.CurrentCustomer.BillingAddress;
                 Address nopShippingAddress = _workContext.CurrentCustomer.ShippingAddress;
+                SqModel.Address billingAddress = new SqModel.Address();
+                SqModel.Address shippingAddress = new SqModel.Address();
                 var shoppingCart = _workContext.CurrentCustomer.ShoppingCartItems.Where(shoppingCartItem => shoppingCartItem.ShoppingCartType == ShoppingCartType.ShoppingCart).ToList();
                 var chargeAmount = (long?)Math.Ceiling(processPaymentRequest.OrderTotal * new decimal(100));
                 var amountMoney = new SqModel.Money(chargeAmount, (SqModel.Money.CurrencyEnum)Enum.Parse(typeof(SqModel.Money.CurrencyEnum), currency.CurrencyCode));
@@ -429,15 +431,27 @@ namespace Nop.Plugin.Payments.Square
                 string idempotencyKey = orderGuid.ToString();
                 string note = null;
                 string customerId = null;
-                SqModel.Address billingAddress = new SqModel.Address(nopBillingAddress.Address1, nopBillingAddress.Address2, Locality: nopBillingAddress.City,
-                                                                AdministrativeDistrictLevel1: nopBillingAddress.StateProvince.Abbreviation, PostalCode: nopBillingAddress.ZipPostalCode,
-                                                                Country: (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopBillingAddress.Country.TwoLetterIsoCode),
-                                                                FirstName: nopBillingAddress.FirstName, LastName: nopBillingAddress.LastName);
 
-                SqModel.Address shippingAddress = new SqModel.Address(nopShippingAddress.Address1, nopShippingAddress.Address2, Locality: nopShippingAddress.City,
-                                                                AdministrativeDistrictLevel1: nopShippingAddress.StateProvince.Abbreviation, PostalCode: nopShippingAddress.ZipPostalCode,
-                                                                Country: (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopShippingAddress.Country.TwoLetterIsoCode),
-                                                                FirstName: nopShippingAddress.FirstName, LastName: nopShippingAddress.LastName);
+                if (nopBillingAddress != null)
+                {
+                    billingAddress.AddressLine1 = nopBillingAddress.Address1 != null ? nopBillingAddress.Address1 : String.Empty;
+                    billingAddress.PostalCode = nopBillingAddress.ZipPostalCode != null ? nopBillingAddress.ZipPostalCode : String.Empty;
+
+
+                    //SqModel.Address billingAddress = new SqModel.Address(nopBillingAddress.Address1, nopBillingAddress.Address2, Locality: nopBillingAddress.City,
+                    //                                            AdministrativeDistrictLevel1: nopBillingAddress.StateProvince.Abbreviation, PostalCode: nopBillingAddress.ZipPostalCode,
+                    //                                            Country: (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopBillingAddress.Country.TwoLetterIsoCode),
+                    //                                            FirstName: nopBillingAddress.FirstName, LastName: nopBillingAddress.LastName);
+                }
+
+                //if (nopShippingAddress != null)
+                //{
+                //    shippingAddress.AddressLine1 = nopShippingAddress.Address1 != null ? nopShippingAddress.Address1 : String.Empty;
+                //    //shippingAddress = new SqModel.Address(nopShippingAddress.Address1, nopShippingAddress.Address2, Locality: nopShippingAddress.City,
+                //    //                                            AdministrativeDistrictLevel1: nopShippingAddress.StateProvince.Abbreviation, PostalCode: nopShippingAddress.ZipPostalCode,
+                //    //                                            Country: (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopShippingAddress.Country.TwoLetterIsoCode),
+                //    //                                            FirstName: nopShippingAddress.FirstName, LastName: nopShippingAddress.LastName);
+                //}
                 string buyerEmailAddress = customer.Email;
                 SqModel.ChargeRequest chargeRequest = new SqModel.ChargeRequest(idempotencyKey, amountMoney, cardNonce, customerCardId, delayCapture, idempotencyKey, note,
                                                                     customerId, billingAddress, shippingAddress, buyerEmailAddress);
