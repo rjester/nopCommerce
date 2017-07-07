@@ -442,6 +442,9 @@ namespace Nop.Plugin.Payments.Square
                     billingAddress.Country = nopBillingAddress.Country != null ? 
                                             (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopBillingAddress.Country.TwoLetterIsoCode) : 
                                             default(SqModel.Address.CountryEnum?);
+                    billingAddress.FirstName = nopBillingAddress.FirstName != null ? nopBillingAddress.FirstName : String.Empty;
+                    billingAddress.LastName = nopBillingAddress.LastName != null ? nopBillingAddress.LastName : String.Empty;
+
 
                     //SqModel.Address billingAddress = new SqModel.Address(nopBillingAddress.Address1, nopBillingAddress.Address2, Locality: nopBillingAddress.City,
                     //                                            AdministrativeDistrictLevel1: nopBillingAddress.StateProvince.Abbreviation, PostalCode: nopBillingAddress.ZipPostalCode,
@@ -459,7 +462,8 @@ namespace Nop.Plugin.Payments.Square
                     shippingAddress.Country = nopShippingAddress.Country != null ?
                                             (SqModel.Address.CountryEnum)Enum.Parse(typeof(SqModel.Address.CountryEnum), nopShippingAddress.Country.TwoLetterIsoCode) :
                                             default(SqModel.Address.CountryEnum?);
-
+                    shippingAddress.FirstName = nopShippingAddress.FirstName != null ? nopShippingAddress.FirstName : String.Empty;
+                    shippingAddress.LastName = nopShippingAddress.LastName != null ? nopShippingAddress.LastName : String.Empty;
                     //    shippingAddress.AddressLine1 = nopShippingAddress.Address1 != null ? nopShippingAddress.Address1 : String.Empty;
                     //    //shippingAddress = new SqModel.Address(nopShippingAddress.Address1, nopShippingAddress.Address2, Locality: nopShippingAddress.City,
                     //    //                                            AdministrativeDistrictLevel1: nopShippingAddress.StateProvince.Abbreviation, PostalCode: nopShippingAddress.ZipPostalCode,

@@ -242,6 +242,8 @@ namespace Nop.Web
             catch (Exception) 
             {
                 //don't throw new exception if occurs
+
+
             }
         }
     }
