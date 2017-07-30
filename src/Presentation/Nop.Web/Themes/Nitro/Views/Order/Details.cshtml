@@ -201,7 +201,7 @@
 
                                 <ul class="shipping-info">
                                     <li class="title">
-                                        @(Model.SelectedPickUpInStore ? T("Order.PickupAddress") : T("Order.ShippingAddress"))
+                                        @(Model.PickUpInStore ? T("Order.PickupAddress") : T("Order.ShippingAddress"))
                                     </li>
                                     @if (!Model.PickUpInStore)
                                     {
