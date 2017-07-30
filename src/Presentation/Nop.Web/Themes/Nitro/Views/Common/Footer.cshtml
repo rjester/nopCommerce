@@ -1,0 +1,150 @@
+﻿@model FooterModel
+@using Nop.Web.Models.Common;
+@using Nop.Core.Domain.Tax;
+@using Nop.Core.Infrastructure;
+@using Nop.Core;
+@using Nop.Services.Configuration;
+@using Nop.Core.Domain.Tax;
+
+@{
+    var workingLanguageId = EngineContext.Current.Resolve<IWorkContext>().WorkingLanguage.Id;
+
+    var storeId = EngineContext.Current.Resolve<IStoreContext>().CurrentStore.Id;
+    var removeDesignedBy = EngineContext.Current.Resolve<ISettingService>().GetSettingByKey("nitrothemesettings.removedesignedby", false, storeId, true);
+    var removeCopyright = EngineContext.Current.Resolve<ISettingService>().GetSettingByKey("nitrothemesettings.removecopyright", false, storeId, true);
+}
+
+<div class="footer">
+    <div class="footer-upper">
+        <div class="footer-centering">
+            <div class="footer-block phone-block">
+                <span>@T("SevenSpikes.Themes.Nitro.Footer.Phone.Text")</span>
+                <span>@T("SevenSpikes.Themes.Nitro.Footer.Phone.Number")</span>
+            </div>
+            <div class="footer-block payment-info-block">
+                <span>@T("SevenSpikes.Themes.Nitro.Footer.Payment.Text1")</span>
+                <span>@T("SevenSpikes.Themes.Nitro.Footer.Payment.Text2")</span>
+            </div>
+            <div class="footer-block accepted-payment-methods">
+                <ul>
+                    <li class="method1"></li>
+                    <li class="method2"></li>
+                    <li class="method3"></li>
+                    <li class="method4"></li>
+                </ul>
+            </div>
+            @{
+                var newsLetterHtml = @Html.Action("NewsletterBox", "Newsletter");
+            }
+            @if (!MvcHtmlString.IsNullOrEmpty(newsLetterHtml))
+            {
+                <div class="footer-block newsletter-block">
+                    @newsLetterHtml
+                </div>
+            }
+        </div>
+    </div>
+    <div class="footer-middle">
+        <div class="footer-centering">
+            <div class="footer-block">
+                <h3>@T("SevenSpikes.Themes.Nitro.Footer.Lists.Title1")</h3>
+                <ul class="footer-menu">
+                    @foreach (var topic in Model.Topics.Where(x => x.IncludeInFooterColumn1).ToList())
+                    {
+                        <li><a href="@Url.RouteUrl("Topic", new { SeName = topic.SeName })">@topic.Name</a></li>
+                    }
+                </ul>
+            </div>
+            <div class="footer-block">
+                <h3>@T("SevenSpikes.Themes.Nitro.Footer.Lists.Title2")</h3>
+                <ul class="footer-menu">
+                    <li><a href="@Url.RouteUrl("ContactUs")">@T("ContactUs")</a> </li>
+                    @foreach (var topic in Model.Topics.Where(x => x.IncludeInFooterColumn2).ToList())
+                    {
+                        <li><a href="@Url.RouteUrl("Topic", new { SeName = topic.SeName })">@topic.Name</a></li>
+                    }
+                    @if (Model.SitemapEnabled)
+                    {
+                        <li><a href="@Url.RouteUrl("Sitemap")">@T("Sitemap")</a></li>
+                    }
+                </ul>
+            </div>
+            <div class="footer-block">
+                <h3>@T("SevenSpikes.Themes.Nitro.Footer.Lists.Title4")</h3>
+                <ul class="footer-menu">
+                    <li><a href="@Url.RouteUrl("CustomerInfo")">@T("Account.CustomerInfo")</a></li>
+                    <li><a href="@Url.RouteUrl("CustomerAddresses")">@T("Account.CustomerAddresses")</a></li>
+                    <li><a href="@Url.RouteUrl("CustomerOrders")">@T("Account.CustomerOrders")</a></li>
+                    @if (Model.WishlistEnabled)
+                    {
+                        <li><a href="@Url.RouteUrl("Wishlist")">@T("Wishlist")</a></li>
+                    }
+                </ul>
+            </div>
+            <div class="footer-block">
+                <h3>@T("SevenSpikes.Themes.Nitro.Footer.Lists.Title3")</h3>
+                <ul class="footer-menu">
+                    @if (Model.NewProductsEnabled)
+                    {
+                        <li><a href="@Url.RouteUrl("NewProducts")">@T("Products.NewProducts")</a></li>
+                    }
+                    @if (Model.RecentlyViewedProductsEnabled)
+                    {
+                        <li><a href="@Url.RouteUrl("RecentlyViewedProducts")">@T("Products.RecentlyViewedProducts")</a></li>
+                    }
+                    @if (Model.CompareProductsEnabled)
+                    {
+                        <li><a href="@Url.RouteUrl("CompareProducts")">@T("Products.Compare.List")</a></li>
+                    }
+                    <li><a href="@Url.RouteUrl("ProductSearch")">@T("Search")</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-lower">
+        <div class="footer-centering">
+
+            <div class="footer-disclaimer">
+                @T("Content.CopyrightNotice", DateTime.Now.Year, Model.StoreName)
+            </div>
+            @if (!removeCopyright)
+            {
+                <div class="footer-powered-by">
+                    Powered by <a href="http://www.nopcommerce.com/">nopCommerce</a>
+                    @*Would you like to remove the "Powered by nopCommerce" link in the bottom of the footer?
+                        Find more info here http://www.nopcommerce.com/copyrightremoval.aspx*@
+                </div>
+            }
+            @if (!removeDesignedBy)
+            {
+                <div class="footer-designed-by">
+                    Designed by <a href="http://www.nop-templates.com/" target="_blank">Nop-Templates.com</a>
+                </div>
+            }
+            @if (Model.DisplayTaxShippingInfoFooter)
+            {
+                var inclTax = EngineContext.Current.Resolve<IWorkContext>().TaxDisplayType == TaxDisplayType.IncludingTax;
+                <div class="footer-tax-shipping">
+                    @T(inclTax ? "Footer.TaxShipping.InclTax" : "Footer.TaxShipping.ExclTax", Url.RouteUrl("Topic", new { SeName = Html.GetTopicSeName("shippinginfo") }))
+                </div>
+            }
+            <div class="footer-block social-sharing">
+                @Html.Action("Social", "Common")
+            </div>
+        </div>
+    </div>
+
+    @{
+        var themeSelector = Html.Action("StoreThemeSelector", "Common");
+    }
+
+    @if (!MvcHtmlString.IsNullOrEmpty(themeSelector))
+    {
+        <div class="footer-store-theme">
+            @themeSelector
+        </div>
+    }
+
+
+    @Html.Widget("footer")
+</div>

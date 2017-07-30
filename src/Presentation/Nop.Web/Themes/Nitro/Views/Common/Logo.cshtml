@@ -1,0 +1,27 @@
+﻿@using Nop.Core
+@using Nop.Core.Infrastructure
+@using Nop.Services.Localization
+@using Nop.Web.Framework.Themes
+@using System.Web.Mvc
+
+@model LogoModel
+@using Nop.Web.Models.Common;
+
+@{
+    var currentThemeName = EngineContext.Current.Resolve<IThemeContext>().WorkingThemeName;
+    var logoPath = "~/Themes/" + currentThemeName + "/Content/img/logo.png";
+
+    var nitroLogo = @Html.Widget("nitro_logo");
+}
+
+<a href="@Url.RouteUrl("HomePage")" class="logo">
+    @if (!MvcHtmlString.IsNullOrEmpty(nitroLogo))
+    {
+        @nitroLogo
+    }
+    else
+    {
+        string storeName = EngineContext.Current.Resolve<IStoreContext>().CurrentStore.GetLocalized(x => x.Name);
+        <img title="" alt="@storeName" src="@Url.Content(logoPath)">
+    }
+</a>

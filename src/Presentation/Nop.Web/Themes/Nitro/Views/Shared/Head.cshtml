@@ -1,0 +1,69 @@
+﻿@using Nop.Web.Framework;
+@using Nop.Core.Infrastructure;
+@using Nop.Web.Framework.UI;
+@using Nop.Core;
+@{
+    var supportRtl = EngineContext.Current.Resolve<IWorkContext>().WorkingLanguage.Rtl;
+    
+    var browser = Request.Browser;
+    var isIeEightOrLess = false;
+    if (browser.Browser == "IE" && browser.MajorVersion <= 8)
+    {
+        isIeEightOrLess = true;
+    }
+    if (isIeEightOrLess)
+    {
+        if (supportRtl)
+        {
+            Html.AppendCssFileParts("~/Themes/Nitro/Content/css/ie8-fix.rtl.css");
+        }
+        else
+        {
+            Html.AppendCssFileParts("~/Themes/Nitro/Content/css/ie8-fix.css");
+        }
+    }
+    Html.AppendCssFileParts("~/Plugins/SevenSpikes.Core/Styles/perfect-scrollbar.min.css");
+    
+    if (supportRtl)
+    {
+        if (browser.Browser == "Safari")
+        {
+            Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/safari-fix.rtl.css");
+        }
+        
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/forum.rtl.css");
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/980.rtl.css");
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/768.rtl.css");
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/480.rtl.css");
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/mobile-only.rtl.css");
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/tables.rtl.css");
+    }
+    else
+    {
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/forum.css");
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/980.css");
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/768.css");
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/480.css");
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/mobile-only.css");
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/tables.css");
+    }
+
+    if (supportRtl)
+    {
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/styles.rtl.css");
+    }
+    else
+    {
+        Html.AppendCssFileParts("~/Themes/Nitro/Content/CSS/styles.css");
+    }
+
+    Html.AddScriptParts("~/Plugins/SevenSpikes.Core/Scripts/footable.js");
+    Html.AddScriptParts("~/Plugins/SevenSpikes.Core/Scripts/perfect-scrollbar.min.js");    
+    Html.AddScriptParts("~/Plugins/SevenSpikes.Core/Scripts/SevenSpikesExtensions.min.js");
+    if (isIeEightOrLess)
+    {
+        Html.AddScriptParts("~/Plugins/SevenSpikes.Core/Scripts/selectivizr.min.js");
+        Html.AddScriptParts("~/Plugins/SevenSpikes.Core/Scripts/respond.min.js");
+    }
+    Html.AddScriptParts("~/Themes/Nitro/Content/scripts/nitro.js");
+}
