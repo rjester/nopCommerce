@@ -13224,6 +13224,13 @@
   <LocaleResource Name="Admin.Vendors.VendorNotes.Fields.Note.Hint">
     <Value>Enter this vendor note message.</Value>
   </LocaleResource>
+    <LocaleResource Name="Admin.Vendors.Fields.AccountNumber">
+    <Value>Account Number</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Vendors.Fields.Accountnumber.Hint">
+    <Value>Enter account number.</Value>
+  </LocaleResource>
+
   <LocaleResource Name="BackInStockSubscriptions.AlreadySubscribed">
     <Value>You're already subscribed for this product back in stock notification</Value>
   </LocaleResource>

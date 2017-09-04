@@ -80,6 +80,9 @@ namespace Nop.Admin.Models.Vendors
         [NopResourceDisplayName("Admin.Vendors.Fields.PageSizeOptions")]
         public string PageSizeOptions { get; set; }
 
+        [NopResourceDisplayName("Admin.Vendors.Fields.AccountNumber")]
+        public string AccountNumber { get; set; }
+
         public IList<VendorLocalizedModel> Locales { get; set; }
 
         [NopResourceDisplayName("Admin.Vendors.Fields.AssociatedCustomerEmails")]
@@ -142,5 +145,8 @@ namespace Nop.Admin.Models.Vendors
         [NopResourceDisplayName("Admin.Vendors.Fields.SeName")]
         [AllowHtml]
         public string SeName { get; set; }
+
+        [NopResourceDisplayName("Admin.Vendors.Fields.AccountNumber")]
+        public string AccountNumber { get; set; }
     }
 }

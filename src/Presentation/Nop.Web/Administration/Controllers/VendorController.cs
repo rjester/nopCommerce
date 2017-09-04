@@ -118,6 +118,11 @@ namespace Nop.Admin.Controllers
                                                            localized.MetaTitle,
                                                            localized.LanguageId);
 
+                _localizedEntityService.SaveLocalizedValue(vendor,
+                                                           x => x.AccountNumber,
+                                                           localized.AccountNumber,
+                                                           localized.LanguageId);
+
                 //search engine name
                 var seName = vendor.ValidateSeName(localized.SeName, localized.Name, false);
                 _urlRecordService.SaveSlug(vendor, seName, localized.LanguageId);
@@ -318,6 +323,7 @@ namespace Nop.Admin.Controllers
                 locale.MetaDescription = vendor.GetLocalized(x => x.MetaDescription, languageId, false, false);
                 locale.MetaTitle = vendor.GetLocalized(x => x.MetaTitle, languageId, false, false);
                 locale.SeName = vendor.GetSeName(languageId, false, false);
+                locale.AccountNumber = vendor.GetLocalized(x => x.AccountNumber, languageId, false, false);
             });
 
             return View(model);
