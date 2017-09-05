@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Seo;
+using Nop.Core.Domain.Common;
 
 namespace Nop.Core.Domain.Vendors
 {
@@ -35,6 +36,11 @@ namespace Nop.Core.Domain.Vendors
         /// Gets or sets the address identifier
         /// </summary>
         public int AddressId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the bill to address identifier
+        /// </summary>
+        public int? BillToAddressId { get; set; }
 
         /// <summary>
         /// Gets or sets the admin comment
@@ -87,6 +93,16 @@ namespace Nop.Core.Domain.Vendors
         public string PageSizeOptions { get; set; }
 
         /// <summary>
+        /// Gets or sets the account number
+        /// </summary>
+        public string AccountNumber { get; set; }
+
+        /// <summary>
+        /// Gets or sets the bill to name
+        /// </summary>
+        public string BillToName { get; set; }
+
+        /// <summary>
         /// Gets or sets vendor notes
         /// </summary>
         public virtual ICollection<VendorNote> VendorNotes
@@ -94,5 +110,12 @@ namespace Nop.Core.Domain.Vendors
             get { return _vendorNotes ?? (_vendorNotes = new List<VendorNote>()); }
             protected set { _vendorNotes = value; }
         }
+
+        #region Navigation properties
+        /// <summary>
+        /// Gets or sets the billing address
+        /// </summary>
+        public virtual Address BillToAddress { get; set; }
+        #endregion
     }
 }

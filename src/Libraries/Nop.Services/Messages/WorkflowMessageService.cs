@@ -17,6 +17,7 @@ using Nop.Services.Customers;
 using Nop.Services.Events;
 using Nop.Services.Localization;
 using Nop.Services.Stores;
+using Nop.Services.Logging;
 
 namespace Nop.Services.Messages
 {
@@ -36,7 +37,7 @@ namespace Nop.Services.Messages
         private readonly EmailAccountSettings _emailAccountSettings;
         private readonly IEventPublisher _eventPublisher;
         private readonly HttpContextBase _httpContext;
-
+        private readonly ILogger _log;
         #endregion
 
         #region Ctor
@@ -344,7 +345,8 @@ namespace Nop.Services.Messages
             _messageTokenProvider.AddStoreTokens(tokens, store, emailAccount);
             _messageTokenProvider.AddOrderTokens(tokens, order, languageId, vendor.Id);
             _messageTokenProvider.AddCustomerTokens(tokens, order.Customer);
-
+            _messageTokenProvider.AddVendorTokens(tokens, vendor);
+            
             //event notification
             _eventPublisher.MessageTokensAdded(messageTemplate, tokens);
 
@@ -475,6 +477,7 @@ namespace Nop.Services.Messages
         /// <returns>Queued email identifier</returns>
         public virtual int SendOrderPaidVendorNotification(Order order, Vendor vendor, int languageId)
         {
+            
             if (order == null)
                 throw new ArgumentNullException("order");
 
@@ -496,7 +499,7 @@ namespace Nop.Services.Messages
             _messageTokenProvider.AddStoreTokens(tokens, store, emailAccount);
             _messageTokenProvider.AddOrderTokens(tokens, order, languageId, vendor.Id);
             _messageTokenProvider.AddCustomerTokens(tokens, order.Customer);
-
+            _messageTokenProvider.AddVendorTokens(tokens, vendor);
             //event notification
             _eventPublisher.MessageTokensAdded(messageTemplate, tokens);
 

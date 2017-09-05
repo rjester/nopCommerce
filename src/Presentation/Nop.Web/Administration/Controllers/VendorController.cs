@@ -123,6 +123,11 @@ namespace Nop.Admin.Controllers
                                                            localized.AccountNumber,
                                                            localized.LanguageId);
 
+                _localizedEntityService.SaveLocalizedValue(vendor,
+                                                           x => x.BillToName,
+                                                           localized.BillToName,
+                                                           localized.LanguageId);
+
                 //search engine name
                 var seName = vendor.ValidateSeName(localized.SeName, localized.Name, false);
                 _urlRecordService.SaveSlug(vendor, seName, localized.LanguageId);
@@ -136,7 +141,7 @@ namespace Nop.Admin.Controllers
                 throw new ArgumentNullException("model");
 
             var address = _addressService.GetAddressById(vendor != null ? vendor.AddressId : 0);
-
+            var billToAddress = _addressService.GetAddressById(vendor != null  && vendor.BillToAddressId.HasValue ? vendor.BillToAddressId.Value : 0);
             if (vendor != null)
             {
                 if (!excludeProperties)
@@ -145,6 +150,11 @@ namespace Nop.Admin.Controllers
                     {
                         model.Address = address.ToModel();
                     }
+                    if (billToAddress != null)
+                    {
+                        model.BillToAddress = billToAddress.ToModel();
+                    }
+
                 }
 
                 //associated customer emails
@@ -182,6 +192,30 @@ namespace Nop.Admin.Controllers
                 }
                 else
                     model.Address.AvailableStates.Add(new SelectListItem { Text = _localizationService.GetResource("Admin.Address.OtherNonUS"), Value = "0" });
+
+                //bill to address
+                model.BillToAddress.CountryEnabled = true;
+                model.BillToAddress.StateProvinceEnabled = true;
+                model.BillToAddress.CityEnabled = true;
+                model.BillToAddress.StreetAddressEnabled = true;
+                model.BillToAddress.StreetAddress2Enabled = true;
+                model.BillToAddress.ZipPostalCodeEnabled = true;
+                model.BillToAddress.PhoneEnabled = true;
+                model.BillToAddress.FaxEnabled = true;
+
+                //bill to address
+                model.BillToAddress.AvailableCountries.Add(new SelectListItem { Text = _localizationService.GetResource("Admin.Address.SelectCountry"), Value = "0" });
+                foreach (var c in _countryService.GetAllCountries(showHidden: true))
+                    model.BillToAddress.AvailableCountries.Add(new SelectListItem { Text = c.Name, Value = c.Id.ToString(), Selected = (billToAddress != null && c.Id == billToAddress.CountryId) });
+
+                var billToStates = model.BillToAddress.CountryId.HasValue ? _stateProvinceService.GetStateProvincesByCountryId(model.BillToAddress.CountryId.Value, showHidden: true).ToList() : new List<StateProvince>();
+                if (billToStates.Any())
+                {
+                    foreach (var s in billToStates)
+                        model.BillToAddress.AvailableStates.Add(new SelectListItem { Text = s.Name, Value = s.Id.ToString(), Selected = (billToAddress != null && s.Id == billToAddress.StateProvinceId) });
+                }
+                else
+                    model.BillToAddress.AvailableStates.Add(new SelectListItem { Text = _localizationService.GetResource("Admin.Address.OtherNonUS"), Value = "0" });
             }
         }
 
@@ -276,7 +310,20 @@ namespace Nop.Admin.Controllers
                     address.StateProvinceId = null;
                 _addressService.InsertAddress(address);
                 vendor.AddressId = address.Id;
+
+                //bill to address
+                var billToAddress = model.BillToAddress.ToEntity();
+                billToAddress.CreatedOnUtc = DateTime.UtcNow;
+                //some validation
+                if (billToAddress.CountryId == 0)
+                    billToAddress.CountryId = null;
+                if (billToAddress.StateProvinceId == 0)
+                    billToAddress.StateProvinceId = null;
+                _addressService.InsertAddress(billToAddress);
+                vendor.BillToAddressId = billToAddress.Id;
+
                 _vendorService.UpdateVendor(vendor);
+
 
                 //locales
                 UpdateLocales(vendor, model);
@@ -324,6 +371,7 @@ namespace Nop.Admin.Controllers
                 locale.MetaTitle = vendor.GetLocalized(x => x.MetaTitle, languageId, false, false);
                 locale.SeName = vendor.GetSeName(languageId, false, false);
                 locale.AccountNumber = vendor.GetLocalized(x => x.AccountNumber, languageId, false, false);
+                locale.BillToName = vendor.GetLocalized(x => x.BillToName, languageId, false, false);
             });
 
             return View(model);
@@ -381,6 +429,33 @@ namespace Nop.Admin.Controllers
                     _addressService.UpdateAddress(address);
                 }
 
+                //bill to address
+                var billToAddress = _addressService.GetAddressById(vendor.BillToAddressId.HasValue ? vendor.BillToAddressId.Value : 0);
+                if (billToAddress == null)
+                {
+                    billToAddress = model.BillToAddress.ToEntity();
+                    billToAddress.CreatedOnUtc = DateTime.UtcNow;
+                    //some validation
+                    if (billToAddress.CountryId == 0)
+                        billToAddress.CountryId = null;
+                    if (billToAddress.StateProvinceId == 0)
+                        billToAddress.StateProvinceId = null;
+
+                    _addressService.InsertAddress(billToAddress);
+                    vendor.BillToAddressId = billToAddress.Id;
+                    _vendorService.UpdateVendor(vendor);
+                }
+                else
+                {
+                    billToAddress = model.BillToAddress.ToEntity(billToAddress);
+                    //some validation
+                    if (billToAddress.CountryId == 0)
+                        billToAddress.CountryId = null;
+                    if (billToAddress.StateProvinceId == 0)
+                        billToAddress.StateProvinceId = null;
+
+                    _addressService.UpdateAddress(billToAddress);
+                }
 
                 //locales
                 UpdateLocales(vendor, model);

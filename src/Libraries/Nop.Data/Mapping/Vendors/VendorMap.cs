@@ -15,6 +15,8 @@ namespace Nop.Data.Mapping.Vendors
             this.Property(v => v.MetaTitle).HasMaxLength(400);
             this.Property(v => v.PageSizeOptions).HasMaxLength(200);
             this.Property(v => v.AccountNumber).HasMaxLength(50);
+            this.Property(v => v.BillToName).HasMaxLength(50);
+            this.Property(v => v.BillToAddressId).IsOptional();
         }
     }
 }

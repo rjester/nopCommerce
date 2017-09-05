@@ -21,7 +21,8 @@ namespace Nop.Admin.Models.Vendors
                 PageSize = 5;
             }
             Address = new AddressModel();
-
+            BillToAddress = new AddressModel();
+            
             Locales = new List<VendorLocalizedModel>();
             AssociatedCustomers = new List<AssociatedCustomerInfo>();
         }
@@ -47,6 +48,8 @@ namespace Nop.Admin.Models.Vendors
         public string AdminComment { get; set; }
 
         public AddressModel Address { get; set; }
+
+        public AddressModel BillToAddress { get; set; }
 
         [NopResourceDisplayName("Admin.Vendors.Fields.Active")]
         public bool Active { get; set; }
@@ -82,6 +85,9 @@ namespace Nop.Admin.Models.Vendors
 
         [NopResourceDisplayName("Admin.Vendors.Fields.AccountNumber")]
         public string AccountNumber { get; set; }
+
+        [NopResourceDisplayName("Admin.Vendors.Fields.BillToName")]
+        public string BillToName { get; set; }
 
         public IList<VendorLocalizedModel> Locales { get; set; }
 
@@ -148,5 +154,8 @@ namespace Nop.Admin.Models.Vendors
 
         [NopResourceDisplayName("Admin.Vendors.Fields.AccountNumber")]
         public string AccountNumber { get; set; }
+
+        [NopResourceDisplayName("Admin.Vendors.Fields.BillToName")]
+        public string BillToName { get; set; }
     }
 }

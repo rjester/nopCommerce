@@ -308,7 +308,15 @@ namespace Nop.Services.Messages
                 _allowedTokens.Add(TokenGroupNames.VendorTokens, new[]
                 {
                     "%Vendor.Name%",
-                    "%Vendor.Email%"
+                    "%Vendor.Email%",
+                    "%Vendor.AccountNumber%",
+                    "%Vendor.BillToName%",
+                    "%Vendor.BillToAddress1%",
+                    "%Vendor.BillToAddress2%",
+                    "%Vendor.BillToCity%",
+                    "%Vendor.BillToState%",
+                    "%Vendor.BillToPostalCode%",
+                    "%Vendor.BillToPhoneNumber%"
                 });
 
                 //gift card tokens
@@ -1111,7 +1119,14 @@ namespace Nop.Services.Messages
         {
             tokens.Add(new Token("Vendor.Name", vendor.Name));
             tokens.Add(new Token("Vendor.Email", vendor.Email));
-
+            tokens.Add(new Token("Vendor.AccountNumber", vendor.AccountNumber));
+            tokens.Add(new Token("Vendor.BillToName", vendor.BillToName));
+            tokens.Add(new Token("Vendor.BillToAddress1", vendor.BillToAddress.Address1));
+            tokens.Add(new Token("Vendor.BillToAddress2", vendor.BillToAddress.Address2));
+            tokens.Add(new Token("Vendor.BillToCity", vendor.BillToAddress.City));
+            tokens.Add(new Token("Vendor.BillToState", vendor.BillToAddress.StateProvince.Abbreviation));
+            tokens.Add(new Token("Vendor.BillToPostalCode", vendor.BillToAddress.ZipPostalCode));
+            tokens.Add(new Token("Vendor.BillToPhoneNumber", vendor.BillToAddress.PhoneNumber));
             //event notification
             _eventPublisher.EntityTokensAdded(vendor, tokens);
         }
